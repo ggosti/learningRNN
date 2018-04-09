@@ -279,7 +279,8 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
             #print 'yhat '
             #print yhat,yhat.shape
             #print 'sumSqrDelta ', sumSqrDelta
-            updatefull,fullSumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars)
+            fullSumSqrDelta = sumSqrDelta
+            if batchFr < 1.0: updatefull,fullSumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars)
             if not showGradStep == None:
                 if j%(passi/showGradStep) == 0:
                     if verbose: print 'alpha*update ', (alpha * update.T).mean(), (alpha * update.T).std() 
@@ -305,24 +306,27 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
                         axs[0,4].imshow(logisticDer,interpolation='nearest')
                         axs[0,4].set_xlabel('t')
                         axs[0,4].set_ylabel('i')
-                    if verbose: print 'update full', (updatefull.T).mean(), (updatefull.T).std() 
-                    axs[1,0].set_title('updatefull')
-                    axs[1,0].set_xlabel('i')
-                    axs[1,0].set_ylabel('i')
-                    axs[1,0].imshow(updatefull,interpolation='nearest')
-                    axs[1,1].set_title('delta')
-                    axs[1,1].set_xlabel('t')
-                    axs[1,1].set_ylabel('i')
-                    axs[1,1].imshow(delta.T,interpolation='nearest')
-                    axs[1,2].set_title('X')
-                    axs[1,2].set_xlabel('t')
-                    axs[1,2].set_ylabel('i')
-                    axs[1,2].imshow(X.T,interpolation='nearest')
+                    if batchFr < 1.0:
+                        if verbose: print 'update full', (updatefull.T).mean(), (updatefull.T).std() 
+                        axs[1,0].set_title('updatefull')
+                        axs[1,0].set_xlabel('i')
+                        axs[1,0].set_ylabel('i')
+                        axs[1,0].imshow(updatefull,interpolation='nearest')
+                        axs[1,1].set_title('delta')
+                        axs[1,1].set_xlabel('t')
+                        axs[1,1].set_ylabel('i')
+                        axs[1,1].imshow(delta.T,interpolation='nearest')
+                        axs[1,2].set_title('X')
+                        axs[1,2].set_xlabel('t')
+                        axs[1,2].set_ylabel('i')
+                        axs[1,2].imshow(X.T,interpolation='nearest')
             #print 'accuracy ', (sumSqrDelta/batchSize) - (fullSumSqrDelta/y.shape[0]),' alpha ',alpha
             deltas.append(sumSqrDelta/batchSize)
             fullDeltas.append(fullSumSqrDelta/y.shape[0])
         if sumSqrDelta == 0.0:
-            updatefull,fullSumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars)
+            fullSumSqrDelta = 0
+            if batchFr < 1.0:
+                updatefull,fullSumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars)
             if fullSumSqrDelta == 0:
                 deltas.append(sumSqrDelta/batchSize)
                 fullDeltas.append(fullSumSqrDelta/y.shape[0])
