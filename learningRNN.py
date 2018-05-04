@@ -52,8 +52,15 @@ def stateVec2stateIndexSeq(sigmas,N,typ = 1):
     ms = np.array(ms)
     return ms
 
+#normalize with norm 1
+def rowNorm(C):
+    norm = np.float32(np.asmatrix(np.sum(np.abs(C),axis=1))).T
+    C = np.float32(np.asarray(C)/np.asarray(norm))
+    #print 'norm ',np.sum(np.abs(C),axis=1)
+    return C
+
 #generate small world
-def generateSmallWorldBase(N,knei,pr,runs,rseed=2219):
+def generateSmallWorldBase(N,knei,pr,rseed=2219):
     np.random.seed(rseed)
     #print '--------------generate network----------------------'
     #startm = np.random.randint(0,(2**N) -1 )
@@ -223,11 +230,7 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
 #    return X,y
 
 
-def rowNorm(C):
-    norm = np.float32(np.asmatrix(np.sum(np.abs(C),axis=1))).T
-    C = np.float32(np.asarray(C)/np.asarray(norm))
-    #print 'norm ',np.sum(np.abs(C),axis=1)
-    return C
+
     
 def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=1, verbose = True, xi = 0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8):
     N= X.shape[1]
