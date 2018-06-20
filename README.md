@@ -95,7 +95,7 @@ To make the training set and the validation set I generate several trajectories
 with different initial states. All this trajectories are put in a list `seqs`:
 ```python
     seqs = []
-    seeds = np.random.choice((2**N) , size=700, replace=False)
+    seeds = np.random.choice((2**N) , size=1400, replace=False)
     for i,sm in enumerate(seeds):
            cicli1,path1 = lrnn.getTrajPy(sm,objective,N,0,0,100000)
            seq1 = list(path1)+[cicli1[0]]
@@ -116,10 +116,11 @@ Now, I can train the learner network:
 
 Visualize the result:
 ```python
-    import matplotlib.pyplot as plt
-    plt.pcolor(trained_matrix)
-    fig, (ax1,ax2)= plt.subplots(2)
-    ax1.pcolor(trained_matrix)
-    ax2.pcolor(objective)
-    plt.show(block=True)
+import matplotlib.pyplot as plt
+fig, (ax1,ax2)= plt.subplots(2)
+ax1.set_title('objective')
+ax1.pcolor(objective)
+ax2.set_title('trained_matrix')
+ax2.pcolor(trained_matrix)
+plt.show(block=True)
 ```
