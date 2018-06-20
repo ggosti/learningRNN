@@ -1,0 +1,4 @@
+numPy
+matplotlib
+pandas
+networkx
