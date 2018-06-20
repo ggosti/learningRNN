@@ -8,7 +8,7 @@ In principle this learning neural network can be trained to predict any binary d
 Requirements
 ------------
 
-The code uses python and the following python open source packages:
+The code uses Python2.7 and the following Python open source packages:
 - NumPy
 - Matplotlib
 - Pandas
