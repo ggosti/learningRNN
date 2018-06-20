@@ -18,7 +18,7 @@ Generate Trajectories from the Model Network
 --------------------------------------------
 
 This implementation considers a discrete-time recurrent neural network with binary neurons.
-The number of neurons N can be set, and the neurons can have activation state either {0,1} if typ = 0,
+The number of neurons N can be set, and the neurons can have activation state either {0,1} if 'typ = 0',
 or {-1,1} if typ = 1. The activation function can only be a step function with a certain threshold thr.
 
 It is useful to set the following parameters:
