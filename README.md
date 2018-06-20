@@ -9,10 +9,10 @@ Requirements
 ------------
 
 The code uses python and the following python open source packages:
--NumPy
--Matplotlib
--Pandas
--NetworkX.
+- NumPy
+- Matplotlib
+- Pandas
+- NetworkX.
 
 Generate Trajectories from the Model Network
 --------------------------------------------
