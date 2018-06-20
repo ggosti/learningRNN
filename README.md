@@ -81,8 +81,8 @@ with different initial states. All this trajectories are put in a list `seqs`:
            seqs.append(seq1)
 ```
 From the list `seqs` I may generate the training set:
-```
-    $ X_train, Y_train = lrnn.makeTrainXYfromSeqs(seqs, nP, isIndex= True)
+```python
+    X_train, Y_train = lrnn.makeTrainXYfromSeqs(seqs, nP, isIndex= True)
 ```
 Similarly, I can generate the test set.
 Now, I can train the learner network:
