@@ -23,6 +23,12 @@ This implementation considers a discrete-time recurrent neural network with bina
 The number of neurons `N` can be set, and the neurons can have activation state either {0,1} if `typ = 0`,
 or {-1,1} if `typ = 1`. The activation function can only be a step function with a certain threshold thr.
 
+In the following text it is assumed that the following packages are loaded
+```python
+    import learningRNN as lrnn
+    import numpy as np
+```
+
 It is useful to set the following parameters:
 ```python
     N= 16 # Number of neurons
