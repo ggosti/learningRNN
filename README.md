@@ -40,7 +40,7 @@ and add random weights. This network will be called objective:
 
 `num_genr` is the Watts-Strogatz alorithm seed.
 Get a int from 0 to 2^N (17 in this example),
-this int is a index that labes the neuraons activation profile.
+this int is a index that labes the neurons activation profile.
 The corresponding binary vector, which will
 be used as a neuron activation profile, can be obtained as:
 
