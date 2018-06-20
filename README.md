@@ -18,21 +18,23 @@ Generate Trajectories from the Model Network
 --------------------------------------------
 
 This implementation considers a discrete-time recurrent neural network with binary neurons.
-The number of neurons N can be set, and the neurons can have activation state either {0,1} if 'typ = 0',
-or {-1,1} if typ = 1. The activation function can only be a step function with a certain threshold thr.
+The number of neurons `N` can be set, and the neurons can have activation state either {0,1} if `typ = 0`,
+or {-1,1} if `typ = 1`. The activation function can only be a step function with a certain threshold thr.
 
 It is useful to set the following parameters:
-    $ N= 16 # Number of neurons
-    $ typ = 0 # typ = 0 neurons with binary activation states {0,1}, typ = 0  neurons with states {-1,1}
-    $ thr = 0 # activation function threshold
-    $ nP = {"N":N, "typ":typ, "thr": thr}
+```python
+    N= 16 # Number of neurons
+    typ = 0 # typ = 0 neurons with binary activation states {0,1}, typ = 0  neurons with states {-1,1}
+    thr = 0 # activation function threshold
+    nP = {"N":N, "typ":typ, "thr": thr}
+```
 
 Generate a random small world network with networkx implementation of Watts-Strogatz algorithm
 and add random weights. This network will be called objective: 
 
     $ num_genr, objective =lrnn.generateSmallWorldBase(N,3,0.3,rseed=2219)
 
-num_genr is the Watts-Strogatz alorithm seed.
+`num_genr` is the Watts-Strogatz alorithm seed.
 Get a int from 0 to 2^N (17 in this example),
 this int is a index that labes the neuraons activation profile.
 The corresponding binary vector, which will
@@ -43,11 +45,11 @@ be used as a neuron activation profile, can be obtained as:
 We can get back to the index:
     $ initial_state_index = lrnn.stateVec2stateIndex(initial_state, N, typ)
 
-Get the next state given the objective network and an initial_state
+Get the next state given the objective network and an `initial_state`
 
     $ cycle, trajectory = lrnn.transPy(initial_state,objective, N, typ, thr)
 
-Given a list of initial state indexs, get a list with the corresponding transtion
+Given a list of initial states `initial_state_list`, get a list with the corresponding transtion
 
     $ initial_state_list = lrnn.stateIndex2stateVecSeq([19,2001,377], N, typ)
     $ transition_list = lrnn.transPy(initial_state_list,objective, N, typ, thr)
@@ -56,13 +58,13 @@ Given a list of initial state indexs, get a list with the corresponding transtio
 Tain the Learner network
 ---------------------------
 
-First we have to set the number of gradient descent steps, and the learning rate alpha:
+First we have to set the number of gradient descent steps `T`, and the learning rate `alpha`:
 
     $ T = 1000 # Number of gradient descent steps
     $ alpha = 10.
 
 To make the training set and the validation set I generate several trajectories
-with different initial states. All this trajectories are put in a list seqs
+with different initial states. All this trajectories are put in a list `seqs`:
 
     $ seqs = []
     $ seeds = np.random.choice((2**N) , size=700, replace=False)
@@ -71,10 +73,11 @@ with different initial states. All this trajectories are put in a list seqs
     $   seq1 = list(path1)+[cicli1[0]]
     $   seqs.append(seq1)
 
-From the list seqs I generate the training set and the test set.
+From the list `seqs` I may generate the training set:
 
     $ X_train, Y_train = lrnn.makeTrainXYfromSeqs(seqs, nP, isIndex= True)
 
+Similarly, I can generate the test set.
 Now, I can train the learner network:
     
     $ trained_matrix, deltas, fullDeltas, exTime, convStep =\
