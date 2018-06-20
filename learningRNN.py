@@ -1,14 +1,13 @@
 '''
-Created on Nov 16, 2017
+Created on Giu 20, 2018
 
-@author: gosti
+@author: Giorgio Gosti
 
 '''
 
-#import numpy as np
-import random
-import math
-import time
+#import random
+#import math
+#import time
 import matplotlib.pyplot as plt
 import matplotlib
 
@@ -22,10 +21,12 @@ print 'numpy ver', np.__version__
 
 dataFolder = '' #add folder were dato should be stored if different from current
 
-# m --> binario = sigma_0
-# typ ti dice se sono neuroni o spin
-# typ=1 --> [-1,1]    typ=0 --> [0,1]
-def stateIndex2stateVec(m,N,typ = 1): 
+def stateIndex2stateVec(m,N,typ = 1):
+    """
+    Returns the binary vector sigma_0 that corresponds to the index m, where m is a int between 0 and 2**N
+    typ determins if the neuron activation state is defined in {-1,1} or {0,1} 
+    typ=1 --> {-1,1}    typ=0 --> {0,1} 
+    """
     sigma_0 = [ (1+typ)* (int(float(m)/2**i) % 2) - typ for i in range(0,N)]    # typ=1 --> [-1,1]    typ=0 --> [0,1]
     sigma_0.reverse()
     sigma_0 = np.array(sigma_0)
@@ -34,33 +35,53 @@ def stateIndex2stateVec(m,N,typ = 1):
 
 # sigma_1 --> decimale = k
 def stateVec2stateIndex(sigma,N,typ = 1):
+    """
+    Returns the index m that corresponds to the binary vector sigma_0, where m is a int between 0 and 2**N
+    typ determins if the neuron activation state is defined in {-1,1} or {0,1} 
+    typ=1 --> {-1,1}    typ=0 --> {0,1} 
+    """
     k=long(0)
     for i in range(0,N):
         k=k+(sigma[i]+typ)/(1+typ)*2**(N-i-1)   # typ=1 --> [-1,1]    typ=0 --> [0,1]
     return k
 
-# m(t) --> binario = sigma_0(t)
 def stateIndex2stateVecSeq(ms,N,typ = 1):
+    """
+    Returns a list of binary vectors sigmas that correspond to the list of indexs ms, 
+    where m in ms is a int between 0 and 2**N
+    typ determins if the neuron activation state is defined in {-1,1} or {0,1} 
+    typ=1 --> {-1,1}    typ=0 --> {0,1} 
+    """
     # type: (state index sequence, number of neurons, typ) -> state vector sequence
     sigmas = [ stateIndex2stateVec(m,N,typ) for m in ms]
     sigmas = np.array(sigmas)
     return sigmas
 
-# sigma_0(t) --> decimale = m(t)
-def stateVec2stateIndexSeq(sigmas,N,typ = 1): 
+def stateVec2stateIndexSeq(sigmas,N,typ = 1):
+    """
+    Returns a list of bindexes ms that correspond to the list of binary vectors sigmas,
+    where m in ms is a int between 0 and 2**N
+    typ determins if the neuron activation state is defined in {-1,1} or {0,1} 
+    typ=1 --> {-1,1}    typ=0 --> {0,1} 
+    """
     ms = [ stateVec2stateIndex(s,N,typ) for s in sigmas]
     ms = np.array(ms)
     return ms
 
-#normalize with norm 1
 def rowNorm(C):
+    """
+    normalize with norm 1
+    """
     norm = np.float32(np.asmatrix(np.sum(np.abs(C),axis=1))).T
     C = np.float32(np.asarray(C)/np.asarray(norm))
     #print 'norm ',np.sum(np.abs(C),axis=1)
     return C
 
-#generate small world
+
 def generateSmallWorldBase(N,knei,pr,rseed=2219):
+    """
+    generate small world network with networkx watts_strogatz_graph, and add random weights. 
+    """
     np.random.seed(rseed)
     #print '--------------generate network----------------------'
     #startm = np.random.randint(0,(2**N) -1 )
@@ -74,8 +95,14 @@ def generateSmallWorldBase(N,knei,pr,rseed=2219):
     C = rowNorm(C)
     return rs,C
 
-# transiton function
 def transPy(sigma_path0,net1,N,typ = 1, thr = 0):
+    """
+    transiton function. net1 is the network that generates the ttransitions
+    
+    If sigma_path0 is a binary vector it generates the corresponding transtions.
+    
+    If sigma_path0 is a list of binary vectors it generates a list with the corresponding transtions.
+    """
     if not net1 == np.float32:
         net1 = np.float32(net1)
     if not sigma_path0 == np.float32:
@@ -131,8 +158,10 @@ def ftr(sigma_path0, sigma_cycleStart, net1, N, typ, thr): # assume path0 is cyc
 # gradient descent functions
 #----------------------------------------------------------------------------------
 
-# gradient descent step
 def gradientDescentStep(y,X,net0,netPars):
+    """
+    gradient descent step for the linear approximation of the activation function gradient
+    """
     N, typ, thr = netPars['N'],netPars['typ'],netPars['thr']
     yhat = transPy(X, net0, N, typ, thr)
     #print 'yhat',yhat
@@ -152,8 +181,10 @@ def gradientDescentStep(y,X,net0,netPars):
         print delta
     return update,np.sum(delta**2),delta,X
 
-# gradient descent step
 def gradientDescentLogisticStep(y,X,k,net0,netPars):
+    """
+    gradient descent step  for the logistic approximation of the activation function
+    """
     N, typ, thr = netPars['N'],netPars['typ'],netPars['thr']
     yhat = transPy(X, net0, N, typ, thr)
     #print 'yhat',yhat
@@ -171,8 +202,10 @@ def gradientDescentLogisticStep(y,X,k,net0,netPars):
     np.fill_diagonal(update, 0) # important no autapsi!!
     return update,np.sum(delta**2),delta,X,logisticDer,gamma
 
-# gradient descent step
 def gradientDescentStepDeltaRule(y,X,alpha,net0,netPars):
+    """
+    gradient descent step
+    """
     N, typ, thr = netPars['N'],netPars['typ'],netPars['thr']
     yhat = transPy(X, net0, N, typ, thr)
     print 'yhat',yhat
