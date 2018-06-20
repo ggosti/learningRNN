@@ -12,7 +12,9 @@ The code uses python and the following python open source packages:
 - NumPy
 - Matplotlib
 - Pandas
-- NetworkX.
+- NetworkX
+
+You may install the Python requirements with `pip install -r requirements.txt`.
 
 Generate Trajectories from the Model Network
 --------------------------------------------
