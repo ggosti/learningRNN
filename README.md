@@ -16,6 +16,11 @@ The code uses Python2.7 and the following Python open source packages:
 
 You may install the Python requirements with `pip install -r requirements.txt`.
 
+Test
+------------
+Run `python test.py` in the folder generated from the unziped repository to test if everytihing is setup. The code `test.py`
+runs the most important functions, which are explained in the rest of this file.
+
 Generate Trajectories from the Model Network
 --------------------------------------------
 
@@ -23,7 +28,7 @@ This implementation considers a discrete-time recurrent neural network with bina
 The number of neurons `N` can be set, and the neurons can have activation state either {0,1} if `typ = 0`,
 or {-1,1} if `typ = 1`. The activation function can only be a step function with a certain threshold thr.
 
-In the following text it is assumed that the following packages are loaded
+In the following text it is assumed that the following packages are loaded:
 ```python
     import learningRNN as lrnn
     import numpy as np
