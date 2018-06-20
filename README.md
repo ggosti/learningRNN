@@ -66,8 +66,16 @@ We can get back to the index:
 
 Get the next state given the objective network and an `initial_state`
 ```python
-    cycle, trajectory = lrnn.transPy(initial_state,objective, N, typ, thr)
+    transition = lrnn.transPy(initial_state,objective, N, typ, thr)
 ```
+
+Produce the trajectory of the discrete-time recurrent neural network given the objective network and an `initial_state`.
+`trajectory` is the full trajectory, and `cycle` is the limit cycle or atractor.
+```python
+    cycle, trajectory = lrnn.getTrajPy(initial_state_index, objective, N,
+                                   typ, thr, trajSize = 1000)
+```
+
 Given a list of initial states `initial_state_list`, get a list with the corresponding transtion
 ```python
     initial_state_list = lrnn.stateIndex2stateVecSeq([19,2001,377], N, typ)
