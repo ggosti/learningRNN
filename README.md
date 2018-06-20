@@ -32,7 +32,9 @@ It is useful to set the following parameters:
 Generate a random small world network with networkx implementation of Watts-Strogatz algorithm
 and add random weights. This network will be called objective: 
 
-    $ num_genr, objective =lrnn.generateSmallWorldBase(N,3,0.3,rseed=2219)
+```python
+    num_genr, objective =lrnn.generateSmallWorldBase(N,3,0.3,rseed=2219)
+```
 
 `num_genr` is the Watts-Strogatz alorithm seed.
 Get a int from 0 to 2^N (17 in this example),
@@ -40,57 +42,63 @@ this int is a index that labes the neuraons activation profile.
 The corresponding binary vector, which will
 be used as a neuron activation profile, can be obtained as:
 
-    $ initial_state = lrnn.stateIndex2stateVec(17,N,typ)
+```python
+    initial_state = lrnn.stateIndex2stateVec(17,N,typ)
+```
 
 We can get back to the index:
-    $ initial_state_index = lrnn.stateVec2stateIndex(initial_state, N, typ)
+```python
+    initial_state_index = lrnn.stateVec2stateIndex(initial_state, N, typ)
+```
 
 Get the next state given the objective network and an `initial_state`
-
-    $ cycle, trajectory = lrnn.transPy(initial_state,objective, N, typ, thr)
-
+```python
+    cycle, trajectory = lrnn.transPy(initial_state,objective, N, typ, thr)
+```
 Given a list of initial states `initial_state_list`, get a list with the corresponding transtion
-
-    $ initial_state_list = lrnn.stateIndex2stateVecSeq([19,2001,377], N, typ)
-    $ transition_list = lrnn.transPy(initial_state_list,objective, N, typ, thr)
-
+```python
+    initial_state_list = lrnn.stateIndex2stateVecSeq([19,2001,377], N, typ)
+    transition_list = lrnn.transPy(initial_state_list,objective, N, typ, thr)
+```
 
 Tain the Learner network
 ---------------------------
 
 First we have to set the number of gradient descent steps `T`, and the learning rate `alpha`:
-
-    $ T = 1000 # Number of gradient descent steps
-    $ alpha = 10.
+```python
+    T = 1000 # Number of gradient descent steps
+    alpha = 10.
+```
 
 To make the training set and the validation set I generate several trajectories
 with different initial states. All this trajectories are put in a list `seqs`:
-
-    $ seqs = []
-    $ seeds = np.random.choice((2**N) , size=700, replace=False)
-    $ for i,sm in enumerate(seeds):
-    $   cicli1,path1 = lrnn.getTrajPy(sm,objective,N,0,0,100000)
-    $   seq1 = list(path1)+[cicli1[0]]
-    $   seqs.append(seq1)
-
+```python
+    seqs = []
+    seeds = np.random.choice((2**N) , size=700, replace=False)
+    for i,sm in enumerate(seeds):
+           cicli1,path1 = lrnn.getTrajPy(sm,objective,N,0,0,100000)
+           seq1 = list(path1)+[cicli1[0]]
+           seqs.append(seq1)
+```
 From the list `seqs` I may generate the training set:
-
+```
     $ X_train, Y_train = lrnn.makeTrainXYfromSeqs(seqs, nP, isIndex= True)
-
+```
 Similarly, I can generate the test set.
 Now, I can train the learner network:
-    
-    $ trained_matrix, deltas, fullDeltas, exTime, convStep =\
-    $     lrnn.runGradientDescent(X_train, Y_train, alpha0= 0.0, alphaHat=alpha,
-    $                         batchFr = 1.0, passi=T, runSeed = 3098, gdStrat="GD", k=1, netPars=nP,
-    $                          showGradStep= None, xi= 0.000, mexpon = -1.5)
-
+```python  
+    trained_matrix, deltas, fullDeltas, exTime, convStep =\
+         lrnn.runGradientDescent(X_train, Y_train, alpha0= 0.0, alphaHat=alpha,
+                             batchFr = 1.0, passi=T, runSeed = 3098, gdStrat="GD", k=1, netPars=nP,
+                              showGradStep= None, xi= 0.000, mexpon = -1.5)
+```
 
 Visualize the result:
-
-    $ import matplotlib.pyplot as plt
-    $ plt.pcolor(trained_matrix)
-    $ fig, (ax1,ax2)= plt.subplots(2)
-    $ ax1.pcolor(trained_matrix)
-    $ ax2.pcolor(objective)
-    $ plt.show(block=True)
+```python
+    import matplotlib.pyplot as plt
+    plt.pcolor(trained_matrix)
+    fig, (ax1,ax2)= plt.subplots(2)
+    ax1.pcolor(trained_matrix)
+    ax2.pcolor(objective)
+    plt.show(block=True)
+```
