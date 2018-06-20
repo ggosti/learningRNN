@@ -38,7 +38,7 @@ and add random weights. This network will be called objective:
     num_genr, objective =lrnn.generateSmallWorldBase(N,3,0.3,rseed=2219)
 ```
 
-`num_genr` is the Watts-Strogatz alorithm seed.
+`num_genr` is the Watts-Strogatz algorithm seed.
 Get a int from 0 to 2^N (17 in this example),
 this int is a index that labes the neurons activation profile.
 The corresponding binary vector, which will
