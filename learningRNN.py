@@ -7,7 +7,7 @@ Created on Giu 20, 2018
 
 #import random
 #import math
-#import time
+import time
 import matplotlib.pyplot as plt
 import matplotlib
 
