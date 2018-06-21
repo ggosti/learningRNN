@@ -42,7 +42,7 @@ It is useful to set the following parameters:
     nP = {"N":N, "typ":typ, "thr": thr}
 ```
 
-Generate a random small world network with networkx implementation of Watts-Strogatz algorithm
+Generate a random small-world network with the NetworkX implementation of Watts-Strogatz algorithm
 and add random weights. This network will be called objective: 
 
 ```python
@@ -51,7 +51,7 @@ and add random weights. This network will be called objective:
 
 `num_genr` is the Watts-Strogatz algorithm seed.
 Get a int from 0 to 2^N (17 in this example),
-this int is a index that labes the neurons activation profile.
+this int is an index that labels the neuron's activation profile.
 The corresponding binary vector, which will
 be used as a neuron activation profile, can be obtained as:
 
@@ -70,19 +70,19 @@ Get the next state given the objective network and an `initial_state`
 ```
 
 Produce the trajectory of the discrete-time recurrent neural network given the objective network and an `initial_state`.
-`trajectory` is the full trajectory, and `cycle` is the limit cycle or atractor.
+`trajectory` is the full trajectory, and `cycle` is the limit cycle or attractor.
 ```python
     cycle, trajectory = lrnn.getTrajPy(initial_state_index, objective, N,
                                    typ, thr, trajSize = 1000)
 ```
 
-Given a list of initial states `initial_state_list`, get a list with the corresponding transtion
+Given a list of initial states `initial_state_list`, get a list with the corresponding transition
 ```python
     initial_state_list = lrnn.stateIndex2stateVecSeq([19,2001,377], N, typ)
     transition_list = lrnn.transPy(initial_state_list,objective, N, typ, thr)
 ```
 
-Tain the Learner network
+Train the Learner network
 ---------------------------
 
 First we have to set the number of gradient descent steps `T`, and the learning rate `alpha`:
@@ -92,7 +92,7 @@ First we have to set the number of gradient descent steps `T`, and the learning 
 ```
 
 To make the training set and the validation set I generate several trajectories
-with different initial states. All this trajectories are put in a list `seqs`:
+with different initial states. All these trajectories are put in a list `seqs`:
 ```python
     seqs = []
     seeds = np.random.choice((2**N) , size=1400, replace=False)
