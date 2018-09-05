@@ -102,6 +102,9 @@ def transPy(sigma_path0,net1,N,typ = 1, thr = 0):
     If sigma_path0 is a binary vector it generates the corresponding transtions.
     
     If sigma_path0 is a list of binary vectors it generates a list with the corresponding transtions.
+    
+    typ determins if the neuron activation state is defined in {-1,1} or {0,1} 
+    typ=1 --> {-1,1}    typ=0 --> {0,1} 
     """
     if not net1 == np.float32:
         net1 = np.float32(net1)
