@@ -245,7 +245,8 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
     for seq in seqs:
         #print len(seq)#len(list(path1)+list([cicli1[0]])) 
         if isIndex == True: o_sigma_path = stateIndex2stateVecSeq(seq,nP['N'], nP['typ'])
-        #print o_sigma_path
+        else: o_sigma_path = seq
+        print o_sigma_path
         listX.append( np.array(o_sigma_path[:-1,:]) )
         listy.append( np.array(o_sigma_path[1:,:]) )
     X = np.vstack(listX)
