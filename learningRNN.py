@@ -243,12 +243,12 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
     listX = []
     listy = []
     for seq in seqs:
-        #print len(seq)#len(list(path1)+list([cicli1[0]])) 
-        if isIndex == True: o_sigma_path = stateIndex2stateVecSeq(seq,nP['N'], nP['typ'])
-        else: o_sigma_path = seq
-        print o_sigma_path
-        listX.append( np.array(o_sigma_path[:-1,:]) )
-        listy.append( np.array(o_sigma_path[1:,:]) )
+        #print len(seq)#len(list(path1)+list([cicli1[0]]))
+        #print seq
+        if isIndex == True: seq = stateIndex2stateVecSeq(seq,nP['N'], nP['typ'])
+        #print o_sigma_path
+        listX.append( np.array(seq[:-1,:]) )
+        listy.append( np.array(seq[1:,:]) )
     X = np.vstack(listX)
     y = np.vstack(listy)
     return X,y
@@ -269,17 +269,19 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
 
 
     
-def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=1, verbose = True, xi = 0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8):
+def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = True):
     N= X.shape[1]
     np.random.seed(runSeed)
     net0 = np.float32(2*np.random.rand(N,N)-1) #np.zeros((r, w), dtype=np.float32)  # np.float32(np.random.randint(0, 2, size=(r, w)))  # np.float32(2*np.random.rand(r,w)-1)
     np.fill_diagonal(net0, 0)
+    if normalize: net0 = rowNorm(net0)
     if not nullConstr == None: net0[nullConstr==True]=0
      
     #print 'start net0'
     #print net0
     #print np.sum(np.abs(net0),axis=1)
     m = X.shape[0]
+    bestErrors = N
     if verbose: print 'm ',m
     if uniqueRow == True:
         new_array = [''.join( str(e) for e in np.uint8(row).tolist() ) for row in X]
@@ -321,45 +323,44 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
             #print 'sumSqrDelta ', sumSqrDelta
             fullSumSqrDelta = sumSqrDelta
             if batchFr < 1.0: updatefull,fullSumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars)
-            if not showGradStep == None:
-                if j%(passi/showGradStep) == 0:
-                    if verbose: print 'alpha*update ', (alpha * update.T).mean(), (alpha * update.T).std() 
-                    f, axs = plt.subplots(2,5)
-                    axs[0,0].set_title('update')
-                    axs[0,0].set_xlabel('i')
-                    axs[0,0].set_ylabel('i')
-                    axs[0,0].imshow(update,interpolation='nearest')
-                    axs[0,1].set_title('delta')
-                    axs[0,1].set_xlabel('t')
-                    axs[0,1].set_ylabel('i')
-                    axs[0,1].imshow(delta.T,interpolation='nearest')
-                    axs[0,2].set_title('X')
-                    axs[0,2].set_xlabel('t')
-                    axs[0,2].set_ylabel('i')
-                    axs[0,2].imshow(X.T,interpolation='nearest')
-                    if gdStrat == 'GDLogistic':
-                        axs[0,3].set_title('gamma')
-                        axs[0,3].set_xlabel('t')
-                        axs[0,3].set_ylabel('i')
-                        axs[0,3].imshow(gamma,interpolation='nearest')
-                        axs[0,4].set_title('log. Der.')
-                        axs[0,4].imshow(logisticDer,interpolation='nearest')
-                        axs[0,4].set_xlabel('t')
-                        axs[0,4].set_ylabel('i')
-                    if batchFr < 1.0:
-                        if verbose: print 'update full', (updatefull.T).mean(), (updatefull.T).std() 
-                        axs[1,0].set_title('updatefull')
-                        axs[1,0].set_xlabel('i')
-                        axs[1,0].set_ylabel('i')
-                        axs[1,0].imshow(updatefull,interpolation='nearest')
-                        axs[1,1].set_title('delta')
-                        axs[1,1].set_xlabel('t')
-                        axs[1,1].set_ylabel('i')
-                        axs[1,1].imshow(delta.T,interpolation='nearest')
-                        axs[1,2].set_title('X')
-                        axs[1,2].set_xlabel('t')
-                        axs[1,2].set_ylabel('i')
-                        axs[1,2].imshow(X.T,interpolation='nearest')
+            if showGradStep:
+                if verbose: print 'alpha*update ', (alpha * update.T).mean(), (alpha * update.T).std()
+                f, axs = plt.subplots(2,5)
+                axs[0,0].set_title('update')
+                axs[0,0].set_xlabel('i')
+                axs[0,0].set_ylabel('i')
+                axs[0,0].imshow(update,interpolation='nearest')
+                axs[0,1].set_title('delta')
+                axs[0,1].set_xlabel('t')
+                axs[0,1].set_ylabel('i')
+                axs[0,1].imshow(delta.T,interpolation='nearest')
+                axs[0,2].set_title('X')
+                axs[0,2].set_xlabel('t')
+                axs[0,2].set_ylabel('i')
+                axs[0,2].imshow(X.T,interpolation='nearest')
+                if gdStrat == 'GDLogistic':
+                    axs[0,3].set_title('gamma')
+                    axs[0,3].set_xlabel('t')
+                    axs[0,3].set_ylabel('i')
+                    axs[0,3].imshow(gamma,interpolation='nearest')
+                    axs[0,4].set_title('log. Der.')
+                    axs[0,4].imshow(logisticDer,interpolation='nearest')
+                    axs[0,4].set_xlabel('t')
+                    axs[0,4].set_ylabel('i')
+                if batchFr < 1.0:
+                    if verbose: print 'update full', (updatefull.T).mean(), (updatefull.T).std()
+                    axs[1,0].set_title('updatefull')
+                    axs[1,0].set_xlabel('i')
+                    axs[1,0].set_ylabel('i')
+                    axs[1,0].imshow(updatefull,interpolation='nearest')
+                    axs[1,1].set_title('delta')
+                    axs[1,1].set_xlabel('t')
+                    axs[1,1].set_ylabel('i')
+                    axs[1,1].imshow(delta.T,interpolation='nearest')
+                    axs[1,2].set_title('X')
+                    axs[1,2].set_xlabel('t')
+                    axs[1,2].set_ylabel('i')
+                    axs[1,2].imshow(X.T,interpolation='nearest')
             #print 'accuracy ', (sumSqrDelta/batchSize) - (fullSumSqrDelta/y.shape[0]),' alpha ',alpha
             deltas.append(sumSqrDelta/batchSize)
             fullDeltas.append(fullSumSqrDelta/y.shape[0])
@@ -373,14 +374,17 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
                 convStep = j
                 if verbose: print 'final sumSqrDelta/batchSize ', sumSqrDelta/batchSize
                 break
-        #print 'sparce'
-        #print net0
-        #print xi * net0
-        net0 += alpha * update.T #- xi * (net0 / net0.mean())
+        #print 'mean update.T', np.mean(np.abs(update.T))
+        #print 'mean alpha * update.T', np.mean(np.abs(alpha * update.T))
+        #print 'mean net0', np.mean(np.abs(net0))
+        net0 += alpha * update.T - xi * net0
         if not nullConstr == None: net0[nullConstr==True]=0
+        if sumSqrDelta/y.shape[0]<bestErrors:
+            bestErrors = sumSqrDelta/y.shape[0]
+            bestNet = net0.copy()
         #net0[net0>1] = 1
         #net0[net0<-1] = -1
-        net0 = rowNorm(net0)
+        if normalize: net0 = rowNorm(net0)
         #print 'net0',net0.shape
     if verbose: print 'final sumSqrDelta ', sumSqrDelta,not np.isfinite(sumSqrDelta)
     if verbose: print 'final sumSqrDelta/batchSize ', sumSqrDelta/batchSize
@@ -389,7 +393,7 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
     end = time.time()
     exTime = end - start
     if verbose: print 'decent time', exTime
-    return net0,deltas,fullDeltas,exTime,convStep
+    return net0,deltas,fullDeltas,exTime,convStep,bestErrors,bestNet
 
 def thFPostiveFNegativeTPFSignRatios(netObj,net0,thRate = 1.0):
     from skimage.filters import threshold_otsu
