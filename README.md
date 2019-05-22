@@ -111,7 +111,7 @@ Now, I can train the learner network:
     trained_matrix, deltas, fullDeltas, exTime, convStep =\
          lrnn.runGradientDescent(X_train, Y_train, alpha0= 0.0, alphaHat=alpha,
                              batchFr = 1.0, passi=T, runSeed = 3098, gdStrat="GD", k=1, netPars=nP,
-                              showGradStep= None, xi= 0.000, mexpon = -1.5)
+                              showGradStep= False, xi= 0.000, mexpon = -1.5)
 ```
 
 Visualize the result:
