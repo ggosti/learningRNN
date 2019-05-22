@@ -121,6 +121,6 @@ fig, (ax1,ax2)= plt.subplots(2)
 ax1.set_title('objective')
 ax1.imshow(objective,cmap='seismic',vmin=-.4,vmax=.4)
 ax2.set_title('trained_matrix')
-ax2.imshow(trained_matrix)
-plt.show(block=True,cmap='seismic',vmin=-.4,vmax=.4)
+ax2.imshow(trained_matrix,cmap='seismic',vmin=-.4,vmax=.4)
+plt.show(block=True)
 ```
