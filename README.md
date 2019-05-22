@@ -97,8 +97,8 @@ with different initial states. All these trajectories are put in a list `seqs`:
     seqs = []
     seeds = np.random.choice((2**N) , size=1400, replace=False)
     for i,sm in enumerate(seeds):
-           cicli1,path1 = lrnn.getTrajPy(sm,objective,N,0,0,100000)
-           seq1 = list(path1)+[cicli1[0]]
+           cycle1,path1 = lrnn.getTrajPy(sm,objective,N,0,0,100000)
+           seq1 = list(path1)+[cycle1[0]]
            seqs.append(seq1)
 ```
 From the list `seqs` I may generate the training set:
@@ -119,8 +119,8 @@ Visualize the result:
 import matplotlib.pyplot as plt
 fig, (ax1,ax2)= plt.subplots(2)
 ax1.set_title('objective')
-ax1.pcolor(objective)
+ax1.imshow(objective,cmap='seismic',vmin=-.4,vmax=.4)
 ax2.set_title('trained_matrix')
-ax2.pcolor(trained_matrix)
-plt.show(block=True)
+ax2.imshow(trained_matrix)
+plt.show(block=True,cmap='seismic',vmin=-.4,vmax=.4)
 ```
