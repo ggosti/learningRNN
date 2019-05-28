@@ -100,7 +100,7 @@ for i in range(len(matrix_set)):
 fig, (ax1)= plt.subplots(1)  
 ax1.set_title('media')
 plt.errorbar(range(14),PE_mean, yerr=PE_std, fmt='.')
-plt.show(block=True)
+
 
 
 # In[33]:
@@ -129,7 +129,7 @@ fig.colorbar(c, ax=ax1)
 ax2.set_title('deviazione standard')
 c=ax2.imshow(STD, cmap= 'seismic')
 fig.colorbar(c, ax=ax2)
-plt.show(block=True)
+
 
 
 # In[ ]:
@@ -142,4 +142,13 @@ print 'M-M_test', np.mean(M-M_test)
 print 'M-M_test', np.mean(STD-STD_test)
 if np.mean(M-M_test)+np.mean(STD-STD_test)<10**(-4):
     print 'Test: Pass'
+
+# Output should be something like:
+# M-M_test 5.05184e-06
+# M-M_test 2.7443364e-05
+# Test: Pass
+
+
+
+plt.show(block=True)
     
