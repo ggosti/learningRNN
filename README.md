@@ -37,7 +37,8 @@ In the following text it is assumed that the following packages are loaded:
 It is useful to set the following parameters:
 ```python
     N= 16 # Number of neurons
-    typ = 0 # typ = 0 neurons with binary activation states {0,1}, typ = 0  neurons with states {-1,1}
+    typ = 0 # typ = 0 neurons with binary activation states {0,1}, typ = 1  neurons with states {-1,1}.
+            # typ=1 --> {-1,1}    typ=0 --> {0,1} 
     thr = 0 # activation function threshold
     nP = {"N":N, "typ":typ, "thr": thr}
 ```
