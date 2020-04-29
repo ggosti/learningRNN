@@ -99,7 +99,7 @@ with different initial states. All these trajectories are put in a list `seqs`:
     seeds = np.random.choice((2**N) , size=1400, replace=False)
     for i,sm in enumerate(seeds):
            cycle1,path1 = lrnn.getTrajPy(sm,objective,N,0,0,100000)
-           seq1 = list(path1)+[cycle1[0]]
+           seq1 = list(path1)
            seqs.append(seq1)
 ```
 From the list `seqs` I may generate the training set:
@@ -109,7 +109,7 @@ From the list `seqs` I may generate the training set:
 Similarly, I can generate the test set.
 Now, I can train the learner network:
 ```python  
-    trained_matrix, deltas, fullDeltas, exTime, convStep =\
+    trained_matrix, deltas, fullDeltas, exTime, convStep, bestErrors, bestNet =\
          lrnn.runGradientDescent(X_train, Y_train, alpha0= 0.0, alphaHat=alpha,
                              batchFr = 1.0, passi=T, runSeed = 3098, gdStrat="GD", k=1, netPars=nP,
                               showGradStep= False, xi= 0.000, mexpon = -1.5)
@@ -160,7 +160,7 @@ From the lists `seqs` and `seqsTest` I may generate the training and the test se
 Similarly, I can generate the test set.
 Now, I can train the learner network:
 ```python  
-    trained_matrix, deltas, deltasTest, fullDeltas, exTime, convStep =\
+    trained_matrix, deltas, deltasTest, fullDeltas, exTime, convStep, bestErrors, bestNet =\
          lrnn.runGradientDescent(X_train, Y_train, alpha0= 0.0, alphaHat=alpha,
                              batchFr = 1.0, passi=T, runSeed = 3098, gdStrat="GD", k=1, netPars=nP,
                               showGradStep= False, xi= 0.000, mexpon = -1.5, Xtest=X_test, ytest=Y_test)
