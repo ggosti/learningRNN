@@ -92,7 +92,7 @@ First we have to set the number of gradient descent steps `T`, and the learning 
     alpha = 10.
 ```
 
-To make the training set and the validation set I generate several trajectories
+To make the training set I generate several trajectories
 with different initial states. All these trajectories are put in a list `seqs`:
 ```python
     seqs = []
@@ -118,6 +118,65 @@ Now, I can train the learner network:
 Visualize the result:
 ```python
 import matplotlib.pyplot as plt
+fig, (ax1,ax2)= plt.subplots(2)
+ax1.set_title('objective')
+ax1.imshow(objective,cmap='seismic',vmin=-1.,vmax=1.)
+ax2.set_title('trained_matrix')
+ax2.imshow(trained_matrix,cmap='seismic',vmin=-1.,vmax=1.)
+plt.show(block=True)
+```
+
+Simultaneously Train and Test the Learner network
+---------------------------
+
+First we have to set the number of gradient descent steps `T`, and the learning rate `alpha`:
+```python
+    T = 1000 # Number of gradient descent steps
+    alpha = 10.
+```
+
+To make the training set and the test set I generate several trajectories
+with different initial states. All these trajectories are put in a list `seqs`:
+```python
+    seqs = []
+    seeds = np.random.choice((2**N) , size=1400, replace=False)
+    for i,sm in enumerate(seeds):
+           cycle1,path1 = lrnn.getTrajPy(sm,objective,N,0,0,100000)
+           seq1 = list(path1)+[cycle1[0]]
+           seqs.append(seq1)
+
+    seqsTest = []
+    seedsTest = np.random.choice((2**N) , size=400, replace=False)
+    for i,sm in enumerate(seedsTest):
+           cycle1,path1 = lrnn.getTrajPy(sm,objective,N,0,0,100000)
+           seq1 = list(path1)+[cycle1[0]]
+           seqsTest.append(seq1)
+```
+From the lists `seqs` and `seqsTest` I may generate the training and the test sets:
+```python
+    X_train, Y_train = lrnn.makeTrainXYfromSeqs(seqs, nP, isIndex= True)
+    X_test, Y_test = lrnn.makeTrainXYfromSeqs(seqsTest, nP, isIndex= True)
+```
+Similarly, I can generate the test set.
+Now, I can train the learner network:
+```python  
+    trained_matrix, deltas, deltasTest, fullDeltas, exTime, convStep =\
+         lrnn.runGradientDescent(X_train, Y_train, alpha0= 0.0, alphaHat=alpha,
+                             batchFr = 1.0, passi=T, runSeed = 3098, gdStrat="GD", k=1, netPars=nP,
+                              showGradStep= False, xi= 0.000, mexpon = -1.5, Xtest=X_test, ytest=Y_test)
+```
+
+Visualize the test and training score evolution:
+```python
+plt.figure()
+plt.plot(deltas,label='Train')
+plt.plot(deltasTest,label='Test')
+plr.lagend()
+```
+
+
+Visualize the result:
+```python
 fig, (ax1,ax2)= plt.subplots(2)
 ax1.set_title('objective')
 ax1.imshow(objective,cmap='seismic',vmin=-1.,vmax=1.)

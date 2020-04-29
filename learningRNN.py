@@ -267,7 +267,7 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
 
 
     
-def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = False):
+def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = False,Xtest=[],ytest=[]):
     N= X.shape[1]
     np.random.seed(runSeed)
     net0 = np.float32(2*np.random.rand(N,N)-1) #np.zeros((r, w), dtype=np.float32)  # np.float32(np.random.randint(0, 2, size=(r, w)))  # np.float32(2*np.random.rand(r,w)-1)
@@ -301,6 +301,7 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
     
     convStep = np.inf
     deltas = []
+    deltasTest = []
     fullDeltas = []
     start = time.time()
     for j in xrange(passi):
@@ -315,6 +316,14 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
             update,sumSqrDelta,delta,X,logisticDer,gamma = gradientDescentLogisticStep(y,X,k,net0,netPars)
             print update
         if j%(passi/200) == 0:
+            # if there is test compute score
+            if len(Xtest)>0:
+                typ, thr = netPars['typ'],netPars['thr']
+                ytesthat = transPy(Xtest, net0, N, typ, thr)
+                #print 'yhat',yhat
+                deltaTest = (ytest-ytesthat)
+                deltaTest = np.sum(deltaTest**2)
+                deltasTest.append(deltaTest/ytest.shape[0])
             #print j
             #print 'yhat '
             #print yhat,yhat.shape
@@ -391,7 +400,10 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
     end = time.time()
     exTime = end - start
     if verbose: print 'decent time', exTime
-    return net0,deltas,fullDeltas,exTime,convStep,bestErrors,bestNet
+    if len(Xtest)>0:
+        return net0,deltas,deltasTest,fullDeltas,exTime,convStep,bestErrors,bestNet
+    else:
+        return net0,deltas,fullDeltas,exTime,convStep,bestErrors,bestNet
 
 def thFPostiveFNegativeTPFSignRatios(netObj,net0,thRate = 1.0):
     from skimage.filters import threshold_otsu
