@@ -32,6 +32,7 @@ In the following text it is assumed that the following packages are loaded:
 ```python
 import learningRNN as lrnn
 import numpy as np
+import matplotlib.pyplot as plt
 ```
 
 It is useful to set the following parameters:
@@ -47,7 +48,7 @@ Generate a random small-world network with the NetworkX implementation of Watts-
 and add random weights. This network will be called objective: 
 
 ```python
-num_genr, objective =lrnn.generateSmallWorldBase(N,3,0.3,rseed=2219)
+num_genr, objective =lrnn.generateSmallWorldBase(N,3,0.3,rseed=3219)
 ```
 
 `num_genr` is the Watts-Strogatz algorithm seed.
@@ -88,7 +89,7 @@ Train the Learner network
 
 First we have to set the number of gradient descent steps `T`, and the learning rate `alpha`:
 ```python
-T = 1000 # Number of gradient descent steps
+T = 3000 # Number of gradient descent steps
 alpha = 10.
 ```
 
@@ -114,10 +115,16 @@ trained_matrix, deltas, fullDeltas, exTime, convStep, bestErrors, bestNet =\
                              batchFr = 1.0, passi=T, runSeed = 3098, gdStrat="GD", k=1, netPars=nP,
                              showGradStep= False, xi= 0.000, mexpon = -1.5)
 ```
+Visualize how the cost function changed through the gradient descent iteration:
+```python
+plt.figure()
+Tp = len(deltas)
+plt.plot(range(0,convStep+int(T/200),int(T/200)),deltas,label='Train alpha '+str(alpha))
+plt.legend()
+```
 
 Visualize the result:
 ```python
-import matplotlib.pyplot as plt
 fig, (ax1,ax2)= plt.subplots(2)
 ax1.set_title('objective')
 ax1.imshow(objective,cmap='seismic',vmin=-1.,vmax=1.)
