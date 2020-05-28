@@ -113,12 +113,11 @@ Now, I can train the learner network:
 trained_matrix, deltas, fullDeltas, exTime, convStep, bestErrors, bestNet =\
      lrnn.runGradientDescent(X_train, Y_train, alpha0= 0.0, alphaHat=alpha,
                              batchFr = 1.0, passi=T, runSeed = 3098, gdStrat="GD", k=1, netPars=nP,
-                             showGradStep= False, xi= 0.000, mexpon = -1.5)
+                             showGradStep= False, xi= 0.000, mexpon = -1.5,normalize=True)
 ```
 Visualize how the cost function changed through the gradient descent iteration:
 ```python
 plt.figure()
-Tp = len(deltas)
 plt.plot(range(0,convStep+int(T/200),int(T/200)),deltas,label='Train alpha '+str(alpha))
 plt.legend()
 ```
@@ -138,7 +137,7 @@ Simultaneously Train and Test the Learner network
 
 First we have to set the number of gradient descent steps `T`, and the learning rate `alpha`:
 ```python
-T = 1000 # Number of gradient descent steps
+T = 3000 # Number of gradient descent steps
 alpha = 10.
 ```
 
@@ -170,15 +169,20 @@ Now, I can train the learner network:
 trained_matrix, deltas, deltasTest, fullDeltas, exTime, convStep, bestErrors, bestNet =\
      lrnn.runGradientDescent(X_train, Y_train, alpha0= 0.0, alphaHat=alpha,
                              batchFr = 1.0, passi=T, runSeed = 3098, gdStrat="GD", k=1, netPars=nP,
-                             showGradStep= False, xi= 0.000, mexpon = -1.5, Xtest=X_test, ytest=Y_test)
+                             showGradStep= False, xi= 0.000, mexpon = -1.5,normalize=True,
+                             Xtest=X_test, ytest=Y_test)
 ```
 
 Visualize the test and training score evolution:
 ```python
 plt.figure()
-plt.plot(deltas,label='Train')
-plt.plot(deltasTest,label='Test')
-plr.lagend()
+if convStep == T:
+  Ts = range(0,T,int(T/200))
+else:
+  Ts = range(0,convStep+int(T/200),int(T/200))
+plt.plot(Ts,deltas,label='Train alpha '+str(alpha))
+plt.plot(Ts,deltasTest,label='Test alpha '+str(alpha))
+plt.legend()
 ```
 
 

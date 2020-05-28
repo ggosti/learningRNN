@@ -299,7 +299,7 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
     if alpha0 == 0.0: alpha0 =alphaHat *( m **(-1.0) ) *( N **(mexpon) ) #alpha0 =alphaHat /  ( m *  N**2)
     if verbose: print('alphaHat',alphaHat,'alpha0',alpha0)
     
-    convStep = np.inf
+    convStep = passi
     deltas = []
     deltasTest = []
     fullDeltas = []
@@ -378,6 +378,8 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
             if fullSumSqrDelta == 0:
                 deltas.append(sumSqrDelta/batchSize)
                 fullDeltas.append(fullSumSqrDelta/y.shape[0])
+                if len(Xtest)>0:
+                    deltasTest.append(deltaTest/ytest.shape[0])
                 convStep = j
                 if verbose: print('final sumSqrDelta/batchSize ', sumSqrDelta/batchSize)
                 break
