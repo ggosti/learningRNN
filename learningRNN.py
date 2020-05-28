@@ -399,7 +399,7 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
         print(deltas)
     end = time.time()
     exTime = end - start
-    if verbose: print 'decent time', exTime
+    if verbose: print('decent time', exTime)
     if len(Xtest)>0:
         return net0,deltas, fullDeltas,exTime,convStep, bestErrors, bestNet, deltasTest
     else:
