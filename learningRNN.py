@@ -5,8 +5,6 @@ Created on Giu 20, 2018
 
 '''
 
-#import random
-#import math
 import time
 import matplotlib.pyplot as plt
 import matplotlib
@@ -17,7 +15,7 @@ import pandas as pd
 import networkx as nx
 import numpy as np
 
-print 'numpy ver', np.__version__
+#print('numpy ver', np.__version__)
 
 dataFolder = '' #add folder were dato should be stored if different from current
 
@@ -29,7 +27,7 @@ def stateIndex2stateVec(m,N,typ = 1):
     """
     sigma_0 = [ (1+typ)* (int(float(m)/2**i) % 2) - typ for i in range(0,N)]    # typ=1 --> [-1,1]    typ=0 --> [0,1]
     sigma_0.reverse()
-    sigma_0 = np.array(sigma_0)
+    sigma_0 = np.array(sigma_0,dtype=np.uint8)
     return sigma_0
 
 
@@ -40,10 +38,10 @@ def stateVec2stateIndex(sigma,N,typ = 1):
     typ determins if the neuron activation state is defined in {-1,1} or {0,1} 
     typ=1 --> {-1,1}    typ=0 --> {0,1} 
     """
-    k=long(0)
+    k=int(0)
     for i in range(0,N):
         k=k+(sigma[i]+typ)/(1+typ)*2**(N-i-1)   # typ=1 --> [-1,1]    typ=0 --> [0,1]
-    return k
+    return int(k)
 
 def stateIndex2stateVecSeq(ms,N,typ = 1):
     """
@@ -158,7 +156,7 @@ def getTrajPy(startm,netx,N,typ,thr,trajSize):
     path = []
     sigma_0 = stateIndex2stateVec(startm,N,typ)
     a = startm
-    b = 0L
+    b = 0
     while (not b in path) and (len(path)<trajSize):
         #print 'sigma_0',sigma_0,sigma_0.shape,type(sigma_0)
         #print 'netx',netx,netx.shape,type(netx)
@@ -173,7 +171,7 @@ def getTrajPy(startm,netx,N,typ,thr,trajSize):
     else: cycle = []
     #print path[0],path[1]
     #print 'state bit lenght',path[0].bit_length()  
-    if long(path[0]).bit_length() <= 64:
+    if int(path[0]).bit_length() <= 64:
         return np.array(cycle,dtype=np.uint64),np.array(path,dtype=np.uint64)
     else: 
         return cycle,path
@@ -227,7 +225,7 @@ def ftr(sigma_path0, sigma_cycleStart, net1, N, typ, thr): # assume path0 is cyc
 # gradient descent functions
 #----------------------------------------------------------------------------------
 
-def gradientDescentStep(y,X,net0,netPars,autapse):
+def gradientDescentStep(y,X,net0,netPars,autapse = False):
     """
     gradient descent step for the linear approximation of the activation function gradient
     """
@@ -240,15 +238,15 @@ def gradientDescentStep(y,X,net0,netPars,autapse):
     #Xp = np.delete(X, (i), axis=1)
     update = np.asmatrix(X).T.dot(np.asmatrix(delta))
     #print update
-    if autapse:
+    if not autapse:
         np.fill_diagonal(update, 0) # important no autapsi!!
     if not np.isfinite(np.sum(delta**2)):
-        print 'net0'
-        print net0
-        print 'yhat'
-        print yhat
-        print 'delta'
-        print delta
+        print('net0')
+        print(net0)
+        print('yhat')
+        print(yhat)
+        print('delta')
+        print(delta)
     return update,np.sum(delta**2),delta,X
 
 def gradientDescentLogisticStep(y,X,k,net0,netPars):
@@ -278,14 +276,14 @@ def gradientDescentStepDeltaRule(y,X,alpha,net0,netPars):
     """
     N, typ, thr = netPars['N'],netPars['typ'],netPars['thr']
     yhat = transPy(X, net0, N, typ, thr)
-    print 'yhat',yhat
+    print('yhat',yhat)
     delta = (y-yhat)
-    print delta
-    print 'X',X
+    print(delta)
+    print('X',X)
     dR = net0.dot(X.T)
-    print 'dR',dR
+    print('dR',dR)
     deltaRule = (alpha*np.ones((N,N),dtype=np.float32) >= np.abs(dR))
-    print 'deltaRule',deltaRule.T
+    print('deltaRule',deltaRule.T)
     #Xp = np.delete(X, (i), axis=1)
     update = np.asmatrix(X).T.dot(np.asmatrix(delta)) 
     #print 'update',update.T
@@ -312,11 +310,10 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
     for seq in seqs:
         #print len(seq)#len(list(path1)+list([cicli1[0]]))
         #print seq
-        if isIndex == True:
-            seq = stateIndex2stateVecSeq(seq,nP['N'], nP['typ'])
+        if isIndex == True: seq = stateIndex2stateVecSeq(seq,nP['N'], nP['typ'])
         #print o_sigma_path
-        listX.append( np.array(seq)[:-1,:] )
-        listy.append( np.array(seq)[1:,:] )
+        listX.append( np.array(seq[:-1,:]) )
+        listy.append( np.array(seq[1:,:]) )
     X = np.vstack(listX)
     y = np.vstack(listy)
     return X,y
@@ -337,11 +334,11 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
 
 
     
-def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = True,autapse=True):
+def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = False,Xtest=[],ytest=[],autapse=False):
     N= X.shape[1]
     np.random.seed(runSeed)
     net0 = np.float32(2*np.random.rand(N,N)-1) #np.zeros((r, w), dtype=np.float32)  # np.float32(np.random.randint(0, 2, size=(r, w)))  # np.float32(2*np.random.rand(r,w)-1)
-    if autapse: np.fill_diagonal(net0, 0)
+    if not autapse: np.fill_diagonal(net0, 0)
     if normalize: net0 = rowNorm(net0)
     if not nullConstr == None: net0[nullConstr==True]=0
      
@@ -350,14 +347,14 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
     #print np.sum(np.abs(net0),axis=1)
     m = X.shape[0]
     bestErrors = N
-    if verbose: print 'm ',m
+    if verbose: print('m ',m)
     if uniqueRow == True:
         new_array = [''.join( str(e) for e in np.uint8(row).tolist() ) for row in X]
         Xunique, index = np.unique(new_array,return_index=True)
         X = X[index,:]
         y = y[index,:]
         m = X.shape[0]
-        if verbose: print 'm unique ',m
+        if verbose: print('m unique ',m)
         plt.figure()
         plt.imshow(X,interpolation='nearest')
         plt.figure()
@@ -365,15 +362,16 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
         plt.colorbar()
     if not gdStrat == 'SGD': batchFr = 1.0
     batchSize = m/batchFr
-    if verbose: print 'batchSize',batchSize,'fract',batchFr
+    if verbose: print('batchSize',batchSize,'fract',batchFr)
     if alpha0 == 0.0: alpha0 =alphaHat *( m **(-1.0) ) *( N **(mexpon) ) #alpha0 =alphaHat /  ( m *  N**2)
-    if verbose: print 'alphaHat',alphaHat,'alpha0',alpha0
+    if verbose: print('alphaHat',alphaHat,'alpha0',alpha0)
     
     convStep = np.inf
     deltas = []
+    deltasTest = []
     fullDeltas = []
     start = time.time()
-    for j in xrange(passi):
+    for j in range(passi):
         alpha = alpha0* ( (1+alpha0*lbd*j)**(-1))    
         if gdStrat == 'SGD':
             update,sumSqrDelta = stochasticGradientDescentStep(y,X,net0,batchSize,netPars)
@@ -383,8 +381,16 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
                 break
         if gdStrat == 'GDLogistic':
             update,sumSqrDelta,delta,X,logisticDer,gamma = gradientDescentLogisticStep(y,X,k,net0,netPars)
-            print update
+            print(update)
         if j%(passi/200) == 0:
+            # if there is test compute score
+            if len(Xtest)>0:
+                typ, thr = netPars['typ'],netPars['thr']
+                ytesthat = transPy(Xtest, net0, N, typ, thr)
+                #print 'yhat',yhat
+                deltaTest = (ytest-ytesthat)
+                deltaTest = np.sum(deltaTest**2)
+                deltasTest.append(deltaTest/ytest.shape[0])
             #print j
             #print 'yhat '
             #print yhat,yhat.shape
@@ -392,7 +398,7 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
             fullSumSqrDelta = sumSqrDelta
             if batchFr < 1.0: updatefull,fullSumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars)
             if showGradStep:
-                if verbose: print 'alpha*update ', (alpha * update.T).mean(), (alpha * update.T).std()
+                if verbose: print('alpha*update ', (alpha * update.T).mean(), (alpha * update.T).std())
                 f, axs = plt.subplots(2,5)
                 axs[0,0].set_title('update')
                 axs[0,0].set_xlabel('i')
@@ -416,7 +422,7 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
                     axs[0,4].set_xlabel('t')
                     axs[0,4].set_ylabel('i')
                 if batchFr < 1.0:
-                    if verbose: print 'update full', (updatefull.T).mean(), (updatefull.T).std()
+                    if verbose: print('update full', (updatefull.T).mean(), (updatefull.T).std())
                     axs[1,0].set_title('updatefull')
                     axs[1,0].set_xlabel('i')
                     axs[1,0].set_ylabel('i')
@@ -439,8 +445,10 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
             if fullSumSqrDelta == 0:
                 deltas.append(sumSqrDelta/batchSize)
                 fullDeltas.append(fullSumSqrDelta/y.shape[0])
+                if len(Xtest)>0:
+                    deltasTest.append(deltaTest/ytest.shape[0])
                 convStep = j
-                if verbose: print 'final sumSqrDelta/batchSize ', sumSqrDelta/batchSize
+                if verbose: print('final sumSqrDelta/batchSize ', sumSqrDelta/batchSize)
                 break
         #print 'mean update.T', np.mean(np.abs(update.T))
         #print 'mean alpha * update.T', np.mean(np.abs(alpha * update.T))
@@ -454,14 +462,17 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
         #net0[net0<-1] = -1
         if normalize: net0 = rowNorm(net0)
         #print 'net0',net0.shape
-    if verbose: print 'final sumSqrDelta ', sumSqrDelta,not np.isfinite(sumSqrDelta)
-    if verbose: print 'final sumSqrDelta/batchSize ', sumSqrDelta/batchSize
+    if verbose: print('final sumSqrDelta ', sumSqrDelta,not np.isfinite(sumSqrDelta))
+    if verbose: print('final sumSqrDelta/batchSize ', sumSqrDelta/batchSize)
     if not np.isfinite(sumSqrDelta):
-        print deltas
+        print(deltas)
     end = time.time()
     exTime = end - start
-    if verbose: print 'decent time', exTime
-    return net0,deltas,fullDeltas,exTime,convStep,bestErrors,bestNet
+    if verbose: print('decent time', exTime)
+    if len(Xtest)>0:
+        return net0,deltas, fullDeltas,exTime,convStep, bestErrors, bestNet, deltasTest
+    else:
+        return net0,deltas,fullDeltas,exTime,convStep, bestErrors, bestNet
 
 def thFPostiveFNegativeTPFSignRatios(netObj,net0,thRate = 1.0):
     from skimage.filters import threshold_otsu
@@ -473,7 +484,7 @@ def thFPostiveFNegativeTPFSignRatios(netObj,net0,thRate = 1.0):
     TN = (1 - thNetObj) * (1 - thNet0)
     FP = (1 - thNetObj) * thNet0
     FN = thNetObj * (1 - thNet0)
-    print net0.shape,net0.shape[0]*net0.shape[1]
+    print(net0.shape,net0.shape[0]*net0.shape[1])
     FNR = 1.0 - float(np.sum(TP))/np.sum(thNetObj==1)
     FPR = 1.0 - float(np.sum(TN))/np.sum(thNetObj==0)
     #print 'FPR',FPR,'FNR',FNR
