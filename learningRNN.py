@@ -93,7 +93,15 @@ def generateSmallWorldBase(N,knei,pr,rseed=2219):
     C = rowNorm(C)
     return rs,C
 
-def transPy(sigma_path0,net1,N,typ = 1, thr = 0):
+def sign(x,signFuncInZero = 1):
+    y = np.sign(x)
+    if signFuncInZero == 1:
+        y[x == 0] = 1
+    elif signFuncInZero == 0:
+        y[x == 0] = -1
+    return y
+
+def transPy(sigma_path0,net1,N,typ = 1, thr = 0,signFuncInZero = 1):
     """
     transiton function. net1 is the network that generates the ttransitions
     
@@ -110,11 +118,39 @@ def transPy(sigma_path0,net1,N,typ = 1, thr = 0):
         sigma_path0 = np.float32(sigma_path0)
     sigma_path1 = net1.dot(sigma_path0.T)
     #print sigma_path1
-    sigma_path1 [sigma_path1  == 0] = 0.000001
+    #if signFuncInZero == 1:
+    #    sigma_path1 [sigma_path1  == 0] = 0.000001
+
     #print sigma_path1
-    sigma_path1 = (1-typ+np.sign(sigma_path1 +thr))/(2-typ)
+    sigma_path1 = (1-typ + sign(sigma_path1 +thr,signFuncInZero) )/(2-typ)
     #print sigma_path1
-    return sigma_path1.T   
+    return sigma_path1.T
+
+
+def transActiv(sigma_path0, net1, N, typ=1, thr=0, signFuncInZero=1):
+    """
+    transiton function. net1 is the network that generates the ttransitions
+
+    If sigma_path0 is a binary vector it generates the corresponding transtions.
+
+    If sigma_path0 is a list of binary vectors it generates a list with the corresponding transtions.
+
+    typ determins if the neuron activation state is defined in {-1,1} or {0,1}
+    typ=1 --> {-1,1}    typ=0 --> {0,1}
+    """
+    if not net1 == np.float32:
+        net1 = np.float32(net1)
+    if not sigma_path0 == np.float32:
+        sigma_path0 = np.float32(sigma_path0)
+    sumx = net1.dot(sigma_path0.T)
+    # print sigma_path1
+    # if signFuncInZero == 1:
+    #    sigma_path1 [sigma_path1  == 0] = 0.000001
+
+    # print sigma_path1
+    sigma_path1 = (1 - typ + sign(sumx + thr, signFuncInZero)) / (2 - typ)
+    # print sigma_path1
+    return sigma_path1.T,sumx
 
 def getTrajPy(startm,netx,N,typ,thr,trajSize):
     path = []
@@ -140,6 +176,36 @@ def getTrajPy(startm,netx,N,typ,thr,trajSize):
     else: 
         return cycle,path
 
+#get trajectories with neuron activation works on binary vector states not indexes
+def getTrajActivation(sigma_0,netx,N,typ,thr,trajSize,signFuncInZero = 0):
+    path = []
+    pathAct = []
+    #sigma_0 = stateIndex2stateVec(startm,N,typ)
+    flag = True
+    while (flag) and (len(path)<trajSize):
+        #print 'netx',netx,netx.shape,type(netx)
+        sigma_1,activity = transActiv(sigma_0, np.float32(netx), N, typ, thr,signFuncInZero)
+        #print 'sigma_1',sigma_1,sigma_1.shape,type(sigma_1)
+        #print a, '->', b
+        path.append(sigma_0)
+        pathAct.append(activity)
+        #print 'sigma_1',sigma_1,sigma_1.shape,type(sigma_1)
+        #print path
+        for indx,s in enumerate(path):
+            if (sigma_1 == s).all():
+                flag = False
+                loopIndx = indx
+        sigma_0 = sigma_1
+    if not flag :
+        cycle = path[loopIndx:] #+ [sigma_0]
+        cycleAct = pathAct[loopIndx:]
+    else:
+        cycle = []
+        cycleAct = []
+    #print path[0],path[1]
+    #print 'state bit lenght',path[0].bit_length()
+    return cycle,path,pathAct,cycleAct
+
 #cost function
 def ftr(sigma_path0, sigma_cycleStart, net1, N, typ, thr): # assume path0 is cycle start
     if not len(sigma_cycleStart) > 0:
@@ -159,7 +225,7 @@ def ftr(sigma_path0, sigma_cycleStart, net1, N, typ, thr): # assume path0 is cyc
 # gradient descent functions
 #----------------------------------------------------------------------------------
 
-def gradientDescentStep(y,X,net0,netPars):
+def gradientDescentStep(y,X,net0,netPars,autapse = False):
     """
     gradient descent step for the linear approximation of the activation function gradient
     """
@@ -172,7 +238,8 @@ def gradientDescentStep(y,X,net0,netPars):
     #Xp = np.delete(X, (i), axis=1)
     update = np.asmatrix(X).T.dot(np.asmatrix(delta))
     #print update
-    np.fill_diagonal(update, 0) # important no autapsi!!
+    if not autapse:
+        np.fill_diagonal(update, 0) # important no autapsi!!
     if not np.isfinite(np.sum(delta**2)):
         print('net0')
         print(net0)
@@ -267,11 +334,11 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
 
 
     
-def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = False,Xtest=[],ytest=[]):
+def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = False,Xtest=[],ytest=[],autapse=False):
     N= X.shape[1]
     np.random.seed(runSeed)
     net0 = np.float32(2*np.random.rand(N,N)-1) #np.zeros((r, w), dtype=np.float32)  # np.float32(np.random.randint(0, 2, size=(r, w)))  # np.float32(2*np.random.rand(r,w)-1)
-    np.fill_diagonal(net0, 0) #no autapsi
+    if not autapse: np.fill_diagonal(net0, 0)
     if normalize: net0 = rowNorm(net0)
     if not nullConstr == None: net0[nullConstr==True]=0
      
@@ -299,7 +366,7 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
     if alpha0 == 0.0: alpha0 =alphaHat *( m **(-1.0) ) *( N **(mexpon) ) #alpha0 =alphaHat /  ( m *  N**2)
     if verbose: print('alphaHat',alphaHat,'alpha0',alpha0)
     
-    convStep = passi
+    convStep = np.inf
     deltas = []
     deltasTest = []
     fullDeltas = []
@@ -309,7 +376,7 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
         if gdStrat == 'SGD':
             update,sumSqrDelta = stochasticGradientDescentStep(y,X,net0,batchSize,netPars)
         if gdStrat == 'GD':
-            update,sumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars)
+            update,sumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars,autapse)
             if not np.isfinite(sumSqrDelta):
                 break
         if gdStrat == 'GDLogistic':
