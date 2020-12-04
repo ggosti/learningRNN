@@ -25,10 +25,7 @@ thr = 0
 nP = {"N":N, "typ":typ, "thr": thr}
 alpha=10.
 
-
-# In[2]:
-
-
+# Funzione per normalizzare matrici
 def NormMatrici (matrice):
     for i in range(len(matrice)): 
         matrice[i]= matrice[i]/(np.dot(matrice[i], matrice[i]))**(0.5) #normalizzo ogni riga di Jij        
@@ -36,9 +33,7 @@ def NormMatrici (matrice):
     return matrice
 
 
-# In[3]:
-
-
+# gira su pezzi di training set
 matrix_set = []
 for j in range(train):
     #medie su 20 condizioni iniziali 
@@ -64,15 +59,15 @@ for j in range(train):
             while b>20:
                 z = np.polyfit(range(b), deltas[-b:], 1)
                 if z[0] > mlim:
-                    print "Delta N =", j+1
-                    print "Il sistema ha raggiunto l'equilibrio al passo" , len(deltas) - b
+                    print("Delta N =", j+1)
+                    print("Il sistema ha raggiunto l'equilibrio al passo" , len(deltas) - b)
                     insuccesso = False
                     #DEL.append(deltas)
                     break 
                 b -= 10
             if insuccesso:
-                print "Delta N =", j+1
-                print "Il sistema non raggiunge l'equilibrio"
+                print("Delta N =", j+1)
+                print("Il sistema non raggiunge l'equilibrio")
                 T*=2
         temp_matrix.append(NormMatrici(trained_matrix))
     matrix_set.append(np.mean(np.array(temp_matrix),axis=0))
@@ -116,7 +111,7 @@ for j in range(splits-train):
     X_test, Y_test = lrnn.makeTrainXYfromSeqs([ w[train+j] ], nP, isIndex= False)
     Y_guess = lrnn.transPy(X_test, matrix_set[i],N,typ,thr)
     PEt.append(np.sum((Y_test-Y_guess)**2/(N*len(Y_test))))
-print "Media e deviazione standard dell'errore percentuale sulla media dei test delle 14 matrici:\n", np.mean(PEt), np.std(PEt)
+print("Media e deviazione standard dell'errore percentuale sulla media dei test delle 14 matrici:\n", np.mean(PEt), np.std(PEt))
 
 
 # In[30]:
@@ -138,10 +133,10 @@ M_test = np.load('testMatrix.npy')
 STD_test = np.load('testMatrixSTD.npy')
 
 
-print 'M-M_test', np.mean(M-M_test)
-print 'M-M_test', np.mean(STD-STD_test)
+print('M-M_test', np.mean(M-M_test))
+print('M-M_test', np.mean(STD-STD_test))
 if np.mean(M-M_test)+np.mean(STD-STD_test)<10**(-4):
-    print 'Test: Pass'
+    print('Test: Pass')
 
 # Output should be something like:
 # M-M_test 5.05184e-06
