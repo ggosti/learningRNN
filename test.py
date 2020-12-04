@@ -7,7 +7,7 @@ thr = 0 # activation function threshold
 nP = {"N":N, "typ":typ, "thr": thr}
 
 # generate objective network
-num_genr, objective =lrnn.generateSmallWorldBase(N,3,0.3,rseed=2219)
+num_genr, objective =lrnn.generateSmallWorldBase(N,3,0.3,rseed=3219)
 
 # generate inital state
 initial_state = lrnn.stateIndex2stateVec(17,N,typ)
@@ -26,7 +26,7 @@ cycle, trajectory = lrnn.getTrajPy(initial_state_index, objective, N,
 
 
 # set the gradient descent hyperparameters
-T = 1000 # Number of gradient descent steps
+T = 3000 # Number of gradient descent steps
 alpha = 10
 
 
@@ -41,16 +41,25 @@ for i,sm in enumerate(seeds):
 X_train, Y_train = lrnn.makeTrainXYfromSeqs(seqs, nP, isIndex= True)
 
 # run gradient descent
-trained_matrix, deltas, fullDeltas, exTime, convStep =\
+trained_matrix, deltas, fullDeltas, exTime, convStep, bestErrors, bestNet =\
      lrnn.runGradientDescent(X_train, Y_train, alpha0= 0.0, alphaHat=alpha,
-                         batchFr = 1.0, passi=T, runSeed = 3098, gdStrat="GD", k=1, netPars=nP,
-                          showGradStep= None, xi= 0.000, mexpon = -1.5)
+                             batchFr = 1.0, passi=T, runSeed = 3198, gdStrat="GD", k=1, netPars=nP,
+                             showGradStep= False, xi= 0.000, mexpon = -1.5,normalize=True)
 
 # see results
 import matplotlib.pyplot as plt
+plt.figure()
+if np.isinf(convStep):
+    plt.plot(range(0,T,int(T/200)),deltas,label='Train alpha '+str(alpha))
+    plt.semilogy()
+else:
+    plt.plot(range(0,convStep+int(T/200),int(T/200)),deltas,label='Train alpha '+str(alpha))
+    plt.semilogy()
+plt.legend()
+
 fig, (ax1,ax2)= plt.subplots(2)
 ax1.set_title('objective')
-ax1.pcolor(objective)
+ax1.imshow(objective)
 ax2.set_title('trained_matrix')
-ax2.pcolor(trained_matrix)
+ax2.imshow(trained_matrix)
 plt.show(block=True)
