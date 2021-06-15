@@ -48,7 +48,7 @@ Generate a random small-world network with the NetworkX implementation of Watts-
 and add random weights. This network will be called objective: 
 
 ```python
-num_genr, objective =lrnn.generateSmallWorldBase(N,3,0.3,rseed=3219)
+num_genr, objective =lrnn.generateSmallWorldBase(N,3,0.3,rseed=6219)
 ```
 
 `num_genr` is the Watts-Strogatz algorithm seed.
@@ -118,7 +118,10 @@ trained_matrix, deltas, fullDeltas, exTime, convStep, bestErrors, bestNet =\
 Visualize how the cost function changed through the gradient descent iteration:
 ```python
 plt.figure()
-plt.plot(range(0,convStep+int(T/200),int(T/200)),deltas,label='Train alpha '+str(alpha))
+if np.isfinite(convStep):
+  plt.plot(range(0,convStep+int(T/200),int(T/200)),deltas,label='Train alpha '+str(alpha))
+else:
+  plt.plot(range(0,T,int(T/200)),deltas,label='Train alpha '+str(alpha))
 plt.legend()
 ```
 
@@ -176,10 +179,11 @@ trained_matrix, deltas, deltasTest, fullDeltas, exTime, convStep, bestErrors, be
 Visualize the test and training score evolution:
 ```python
 plt.figure()
-if convStep == T:
-  Ts = range(0,T,int(T/200))
-else:
+if np.isfinite(convStep):
   Ts = range(0,convStep+int(T/200),int(T/200))
+else:
+  Ts = range(0,T,int(T/200))
+  
 plt.plot(Ts,deltas,label='Train alpha '+str(alpha))
 plt.plot(Ts,deltasTest,label='Test alpha '+str(alpha))
 plt.legend()
