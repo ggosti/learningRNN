@@ -225,12 +225,12 @@ def ftr(sigma_path0, sigma_cycleStart, net1, N, typ, thr): # assume path0 is cyc
 # gradient descent functions
 #----------------------------------------------------------------------------------
 
-def gradientDescentStep(y,X,net0,netPars,autapse = False):
+def gradientDescentStep(y,X,net0,netPars,autapse = False,signFuncInZero = 1):
     """
     gradient descent step for the linear approximation of the activation function gradient
     """
     N, typ, thr = netPars['N'],netPars['typ'],netPars['thr']
-    yhat = transPy(X, net0, N, typ, thr)
+    yhat = transPy(X, net0, N, typ, thr,signFuncInZero)
     #print 'yhat',yhat
     delta = (y-yhat)
     #print delta
@@ -334,8 +334,13 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
 
 
     
-def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = False,Xtest=[],ytest=[],autapse=False):
-    N= X.shape[1]
+def runGradientDescent(X,y,N,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = False,Xtest=[],ytest=[],autapse=False,signFuncInZero=1):
+    if N == X.shape[0]:
+        X=X.T
+        y=y.T
+        if len(Xtest)>0:
+            Xtest=Xtest.T
+    	    ytest=ytest.T
     np.random.seed(runSeed)
     net0 = np.float32(2*np.random.rand(N,N)-1) #np.zeros((r, w), dtype=np.float32)  # np.float32(np.random.randint(0, 2, size=(r, w)))  # np.float32(2*np.random.rand(r,w)-1)
     if not autapse: np.fill_diagonal(net0, 0)
@@ -376,7 +381,7 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
         if gdStrat == 'SGD':
             update,sumSqrDelta = stochasticGradientDescentStep(y,X,net0,batchSize,netPars)
         if gdStrat == 'GD':
-            update,sumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars,autapse)
+            update,sumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars,autapse,signFuncInZero)
             if not np.isfinite(sumSqrDelta):
                 break
         if gdStrat == 'GDLogistic':
@@ -396,7 +401,7 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
             #print yhat,yhat.shape
             #print 'sumSqrDelta ', sumSqrDelta
             fullSumSqrDelta = sumSqrDelta
-            if batchFr < 1.0: updatefull,fullSumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars)
+            if batchFr < 1.0: updatefull,fullSumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars,autapse,signFuncInZero)
             if showGradStep:
                 if verbose: print('alpha*update ', (alpha * update.T).mean(), (alpha * update.T).std())
                 f, axs = plt.subplots(2,5)
@@ -441,7 +446,7 @@ def runGradientDescent(X,y,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.
         if sumSqrDelta == 0.0:
             fullSumSqrDelta = 0
             if batchFr < 1.0:
-                updatefull,fullSumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars)
+                updatefull,fullSumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars,autapse,signFuncInZero)
             if fullSumSqrDelta == 0:
                 deltas.append(sumSqrDelta/batchSize)
                 fullDeltas.append(fullSumSqrDelta/y.shape[0])
