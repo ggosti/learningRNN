@@ -336,6 +336,7 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
     
 def runGradientDescent(X,y,N,alpha0,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = False,Xtest=[],ytest=[],autapse=False,signFuncInZero=1):
     if N == X.shape[0]:
+        print('traspose X and y')
         X=X.T
         y=y.T
         if len(Xtest)>0:
