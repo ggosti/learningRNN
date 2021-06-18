@@ -341,7 +341,7 @@ def runGradientDescent(X,y,N,alpha0,alphaHat=None, nullConstr = None,batchFr = 1
         y=y.T
         if len(Xtest)>0:
             Xtest=Xtest.T
-    	    ytest=ytest.T
+            ytest=ytest.T
     np.random.seed(runSeed)
     net0 = np.float32(2*np.random.rand(N,N)-1) #np.zeros((r, w), dtype=np.float32)  # np.float32(np.random.randint(0, 2, size=(r, w)))  # np.float32(2*np.random.rand(r,w)-1)
     if not autapse: np.fill_diagonal(net0, 0)
