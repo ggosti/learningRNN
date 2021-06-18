@@ -337,13 +337,9 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
 def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = False,Xtest=[],ytest=[],autapse=False,signFuncInZero=1):
     if N == None:
         N = netPars['N']
-    if N == X.shape[0]:
-        print('Warning!: traspose X and y')
-        X=X.T
-        y=y.T
-        if len(Xtest)>0:
-            Xtest=Xtest.T
-            ytest=ytest.T
+    if not N == X.shape[1]:
+        print('ERROR!: traspose X and y')
+        break
     np.random.seed(runSeed)
     net0 = np.float32(2*np.random.rand(N,N)-1) #np.zeros((r, w), dtype=np.float32)  # np.float32(np.random.randint(0, 2, size=(r, w)))  # np.float32(2*np.random.rand(r,w)-1)
     if not autapse: np.fill_diagonal(net0, 0)
