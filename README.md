@@ -169,7 +169,7 @@ X_test, Y_test = lrnn.makeTrainXYfromSeqs(seqsTest, nP, isIndex= True)
 Similarly, I can generate the test set.
 Now, I can train the learner network:
 ```python  
-trained_matrix, deltas, deltasTest, fullDeltas, exTime, convStep, bestErrors, bestNet =\
+trained_matrix, deltas, fullDeltas,exTime,convStep, bestErrors, bestNet, deltasTest=\
      lrnn.runGradientDescent(X_train, Y_train, alpha0= 0.0, alphaHat=alpha,
                              batchFr = 1.0, passi=T, runSeed = 3098, gdStrat="GD", k=1, netPars=nP,
                              showGradStep= False, xi= 0.000, mexpon = -1.5,normalize=True,
@@ -180,9 +180,9 @@ Visualize the test and training score evolution:
 ```python
 plt.figure()
 if np.isfinite(convStep):
-  Ts = range(0,T,int(T/200))
-else:
   Ts = range(0,convStep+int(T/200),int(T/200))
+else:
+  Ts = range(0,T,int(T/200))
   
 plt.plot(Ts,deltas,label='Train alpha '+str(alpha))
 plt.plot(Ts,deltasTest,label='Test alpha '+str(alpha))
