@@ -180,9 +180,9 @@ Visualize the test and training score evolution:
 ```python
 plt.figure()
 if np.isfinite(convStep):
-  Ts = range(0,convStep+int(T/200),int(T/200))
-else:
   Ts = range(0,T,int(T/200))
+else:
+  Ts = range(0,convStep+int(T/200),int(T/200))
   
 plt.plot(Ts,deltas,label='Train alpha '+str(alpha))
 plt.plot(Ts,deltasTest,label='Test alpha '+str(alpha))
