@@ -76,22 +76,40 @@ def rowNorm(C):
     return C
 
 
-def generateSmallWorldBase(N,knei,pr,rseed=2219):
-    """
-    generate small world network with networkx watts_strogatz_graph, and add random weights. 
-    """
+def generateSmallWorldBase(N,knei,pr,rseed=None):
+    """""
+    generate small world network with networkx watts_strogatz_graph, 
+    and add random weights
+
+    inputs:
+    N=numero nodi rete 
+    k=numero di primi vicini a cui e legato ciascun nodo in una configurazione ad anello
+    p=probabilita di reimpostazione di ogni connessione
+    """""
+    
+    #genero un seme random (numero intero compreso tra 0 e 10000)
+    if rseed==None: 
+        rseed=np.random.randint(0,10000)
+    
+    print (rseed)
+    
+
+    #genero una rete casuale con seme 'seed' (connessioni casuali tra nodi)
+    G=nx.watts_strogatz_graph(N,knei,pr,rseed)
+
+    #genero matrice delle adiacenze di G
+    C=np.int32(nx.adjacency_matrix(G).todense())
+
+    #assegnazione dei pesi random ai collegamenti 
+    # (per generazione matrice di pesi uso seme 'seed') (?)
     np.random.seed(rseed)
-    #print '--------------generate network----------------------'
-    #startm = np.random.randint(0,(2**N) -1 )
-    #print 'startm',startm
-    rs = np.random.randint(0,10000)
-    #print 'obj. matrix seed ',rs
-    #paramsObj['objSeed']=rs
-    G=nx.watts_strogatz_graph(N, knei, pr, rs)
-    C = np.asarray(np.float32(nx.adjacency_matrix(G).todense()))#float(knei)
-    C = np.float32( (2*np.random.rand(N,N)-1 )) * C
-    C = rowNorm(C)
-    return rs,C
+    pesi=np.float32(np.random.rand(N,N))
+
+    C=np.float32(np.multiply(pesi,C))
+
+    return rseed, C
+
+
 
 def sign(x,signFuncInZero = 1):
     y = np.sign(x)
