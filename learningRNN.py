@@ -352,7 +352,7 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
 
 
     
-def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = False,Xtest=[],ytest=[],autapse=False,signFuncInZero=1):
+def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = False,Xtest=[],ytest=[], Xval=[], yval=[], autapse=False,signFuncInZero=1):
     if N == None:
         N = netPars['N']
     assert N == X.shape[1] , 'ERROR!: makeTrainXYfromSeqs was made with trasposed input'
@@ -389,6 +389,7 @@ def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchF
     convStep = np.inf
     deltas = []
     deltasTest = []
+    deltasVal = []
     fullDeltas = []
     start = time.time()
     for j in range(passi):
@@ -411,6 +412,13 @@ def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchF
                 deltaTest = (ytest-ytesthat)
                 deltaTest = np.sum(deltaTest**2)
                 deltasTest.append(deltaTest/ytest.shape[0])
+            if len(Xval)>0:
+                typ, thr = netPars['typ'],netPars['thr']
+                yValhat = transPy(Xval, net0, N, typ, thr)
+                #print 'yhat',yhat
+                deltaVal = (yval-yValhat)
+                deltaVal = np.sum(deltaVal**2)
+                deltasVal.append(deltaVal/yval.shape[0])
             #print j
             #print 'yhat '
             #print yhat,yhat.shape
@@ -467,6 +475,8 @@ def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchF
                 fullDeltas.append(fullSumSqrDelta/y.shape[0])
                 if len(Xtest)>0:
                     deltasTest.append(deltaTest/ytest.shape[0])
+                if len(Xval)>0:
+                    deltasVal.append(deltaVal/yval.shape[0])
                 convStep = j
                 if verbose: print('final sumSqrDelta/batchSize ', sumSqrDelta/batchSize)
                 break
@@ -489,8 +499,10 @@ def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchF
     end = time.time()
     exTime = end - start
     if verbose: print('decent time', exTime)
-    if len(Xtest)>0:
+    if (len(Xtest)>0) and (len(Xval)==0):
         return net0,deltas, fullDeltas,exTime,convStep, bestErrors, bestNet, deltasTest
+    if (len(Xtest)>0) and (len(Xval)>0):
+            return net0,deltas, fullDeltas,exTime,convStep, bestErrors, bestNet, deltasTest, deltasVal
     else:
         return net0,deltas,fullDeltas,exTime,convStep, bestErrors, bestNet
 
