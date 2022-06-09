@@ -103,7 +103,7 @@ def generateSmallWorldBase(N,knei,pr,rseed=None):
     #assegnazione dei pesi random ai collegamenti 
     # (per generazione matrice di pesi uso seme 'seed') (?)
     np.random.seed(rseed)
-    pesi=np.float32(np.random.rand(N,N))
+    pesi=np.float32(2*np.random.rand(N,N)-1)
 
     C=np.float32(np.multiply(pesi,C))
 
@@ -135,7 +135,7 @@ def transPy(sigma_path0,net1,N,typ = 1, thr = 0,signFuncInZero = 1):
     if not sigma_path0 == np.float32:
         sigma_path0 = np.float32(sigma_path0)
     sigma_path1 = net1.dot(sigma_path0.T)
-    #print sigma_path1
+    print(sigma_path1)
     #if signFuncInZero == 1:
     #    sigma_path1 [sigma_path1  == 0] = 0.000001
 
