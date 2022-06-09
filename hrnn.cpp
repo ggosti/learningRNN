@@ -489,9 +489,9 @@ void trans(int* sigma_path0,int* sigma_path1,double* net,unsigned int size,int t
   // Heavyside for each element in v 
   for (unsigned int i = 0; i < size; ++i) {
     temp = (v[i] > thr);//>= thr);  for backwords comparrison
-    py::print("i",i,v[i],temp );
+    //py::print("i",i,v[i],temp );
     temp += (temp==0)*(v[i] == thr)*signFuncInZero;  //
-    py::print("i",i,v[i],temp );
+    //py::print("i",i,v[i],temp );
     sigma_path1[i]=(1-typ + temp)/(2-typ);
   }  
   //sigma_path1 = (1-typ + sign(sigma_path1 +thr,signFuncInZero) )/(2-typ)
@@ -512,9 +512,9 @@ py::array_t<int> tranCpp(py::array_t<int> sigma_path0,py::array_t<double> net,in
   double *ptrNet = (double *) bufNet.ptr;
   unsigned int Np = (unsigned int) bufNet.shape[1];
   unsigned int Npp = (unsigned int)  bufNet.shape[0];
-  py::print("N",N);
-  py::print("Np",Np);
-  py::print("Npp",Npp);
+  //py::print("N",N);
+  //py::print("Np",Np);
+  //py::print("Npp",Npp);
   assert (N == Np);  // change line 11 # define N 14
   assert (N == Npp);
 

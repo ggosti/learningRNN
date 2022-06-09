@@ -24,10 +24,14 @@ print('--> Test state index to state vec and back cpp implementation',initial_st
 print('initial_state',initial_state)
 transition = lrnn.transPy(initial_state,objective, N, typ, thr)
 print('transition',transition.T)
-print('--objective--')
-print(objective[3:5,:])
-transition = hrnn.tranCpp(initial_state,objective, typ, thr,1)
-print('transition',transition)
+print('transition',transition.T[0])
+#print('--objective--')
+#print(objective[3:5,:])
+transitionCpp = hrnn.tranCpp(initial_state,objective, typ, thr,1)
+print('transitionCpp',transitionCpp)
+
+print('-->Test transition Cpp',(transition.T[0]==transitionCpp).all())
+
 
 # generate list of inital states and the corresponding transitions
 initial_state_list = lrnn.stateIndex2stateVecSeq([19,2001,377], N, typ)
