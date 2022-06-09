@@ -1,9 +1,10 @@
 import learningRNN as lrnn
 import numpy as np
+import hrnn
 
 N= 16 # Number of neurons
 typ = 0 # typ = 0 neurons with binary activation states {0,1}, typ = 0  neurons with states {-1,1}
-thr = 0 # activation function threshold
+thr = 0.0 # activation function threshold
 nP = {"N":N, "typ":typ, "thr": thr}
 
 # generate objective network
@@ -11,10 +12,22 @@ num_genr, objective =lrnn.generateSmallWorldBase(N,3,0.3,rseed=3219)
 
 # generate inital state
 initial_state = lrnn.stateIndex2stateVec(17,N,typ)
+out=hrnn.stateIndex2stateVec(17,N)
+print('out',out, (out==initial_state).all())
 initial_state_index = lrnn.stateVec2stateIndex(initial_state, N, typ)
+print('--> Test state index to state vec and back',initial_state_index==17)
+initial_state_index_cpp = hrnn.stateVec2stateIndex(out)
+initial_state_index_cpp2 = hrnn.stateVec2stateIndex(initial_state)
+print('--> Test state index to state vec and back cpp implementation',initial_state_index_cpp,initial_state_index_cpp==17,initial_state_index_cpp2==17)
 
 # generate the corresponding transitions
+print('initial_state',initial_state)
 transition = lrnn.transPy(initial_state,objective, N, typ, thr)
+print('transition',transition.T)
+print('--objective--')
+print(objective[3:5,:])
+transition = hrnn.tranCpp(initial_state,objective, typ, thr,1)
+print('transition',transition)
 
 # generate list of inital states and the corresponding transitions
 initial_state_list = lrnn.stateIndex2stateVecSeq([19,2001,377], N, typ)
