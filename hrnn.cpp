@@ -29,7 +29,7 @@
 
 #define HASH_MULT  314159    /* random multiplier */
 #define HASH_PRIME 516595003 /* the 27182818th prime; it's $\leq 2^{29}$ */
-#define N 16//14//5//14
+#define N 14//14//5//14
 
 
 using namespace std;
@@ -536,20 +536,63 @@ py::array_t<int> tranCpp(py::array_t<int> sigma_path0,py::array_t<double> net,in
 //    sigma_path0 is a array of binary vectors it generates a array with the corresponding transtions.    
 //    typ determins if the neuron activation state is defined in {-1,1} or {0,1} 
 //    typ=1 --> {-1,1}    typ=0 --> {0,1} 
-void trans(int* sigma_path0,int* sigma_path1,double* net,unsigned int size,int typ = 1,int thr = 0,int signFuncInZero = 1) {  
-  //da fare
+void trans(int* sigma_path0,int* sigma_path1,double* net, unsigned int numS0 ,unsigned int size,int typ = 1,int thr = 0,int signFuncInZero = 1) {  
+  double v[numS0*N];
+  int temp;
+  assert(N==size);
+
+  // print net
+  //py::print("net in dot");
+  //for (unsigned int j=0; j<N;++j){
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(mat[i+j*N]);
+  //    //py::print(i,j,k,ptrNet[i+j*N+k*N*N]);
+  //  }
+  //py::print(j,line);
+	//}
+  //py::print("N",N);
+  // compute activation
+  double o;
+  unsigned int k,j,i;
+  for (k = 0; k < numS0; ++k) {
+    //py::print("k",k);
+    for (j = 0; j < N; ++j) {
+      //py::list line;
+      o=0; 
+      for (i = 0; i < N; ++i) {
+	      o += net[i+N*j] * (double) sigma_path0[i+N*k];
+	      //line.append("+");
+	      //line.append(net[i+j*N]);
+	      //line.append("*");
+	      //line.append(sigma_path0[i]);
+      }
+      v[j+N*k]=o;
+      //py::print("j",j,o,"=",line);
+    }
+  }
+
+  //sigma_path1 = net1.dot(sigma_path0.T)
+  // Heavyside for each element in v 
+  for (i = 0; i < numS0*N; ++i) {
+    temp = (v[i] > thr);//>= thr);  for backwords comparrison
+    //py::print("i",i,v[i],temp );
+    temp += (temp==0)*(v[i] == thr)*signFuncInZero;  //
+    //py::print("i",i,v[i],temp );
+    sigma_path1[i]=(1-typ + temp)/(2-typ);
+  }  
+  //sigma_path1 = (1-typ + sign(sigma_path1 +thr,signFuncInZero) )/(2-typ)
 } 
 
-py::array_t<int> tranManyStatesCpp(py::array_t<int> sigma_path0,py::array_t<double> net,int typ = 1,double thr = 0,int signFuncInZero = 1){
+py::array_t<int> transManyStatesCpp(py::array_t<int> sigma_path0,py::array_t<double> net,int typ = 1,double thr = 0,int signFuncInZero = 1){
   //sigma_path0
   py::buffer_info bufS0 = sigma_path0.request();
   int *ptrS0 = (int *) bufS0.ptr;
-  unsigned int numS0 = (unsigned int) bufS0.shape[0];
-  unsigned int size = (unsigned int) bufS0.shape[1];
+  size_t numS0 = (unsigned int) bufS0.shape[0];
+  size_t size = (unsigned int) bufS0.shape[1];
   assert (N == size);
-  py::print("numS0",numS0)
   //sigma_path1
-  py::array_t<int> sigma_path1 = py::array_t<int>(numS0*N);
+  py::array_t<int> sigma_path1 = py::array_t<int>(bufS0.shape);
 	py::buffer_info bufS1 = sigma_path1.request();
   int *ptrS1 = (int *) bufS1.ptr;
   //net
@@ -578,6 +621,72 @@ py::array_t<int> tranManyStatesCpp(py::array_t<int> sigma_path0,py::array_t<doub
   return  sigma_path1;
 }
 
+void gradientDescentStep(int* ptrY, int* ptrX, unsigned int numX, double* ptrNet0, double* ptrDeltas, double* ptrUpdate, int typ, double thr, int signFuncInZero){
+  unsigned int i,j,k;
+
+  //py::array_t<int> Ypred = py::array_t<int>(N*numX);
+	//py::buffer_info bufYpred = Ypred.request();
+  //int *ptrYpred = (int *) bufYpred.ptr;
+  int Ypred[numX*N];
+
+  trans(ptrX, Ypred, ptrNet0, numX, N,typ, thr, signFuncInZero);
+  for(i=0; i<numX*N; i++){
+    ptrDeltas[i] = ptrY[i] - Ypred[i];
+  } 
+
+  for(j=0; j<N; j++){
+    for(i=0; i<N; i++){
+      ptrUpdate[i+N*j] = 0;
+      for(k=0;k<numX;k++){
+        ptrUpdate[i+N*j] += ptrDeltas[i+N*k] * ptrX[j+N*k];
+      }
+    }
+  } 
+}
+
+py::dict gradientDescentStepCpp(py::array_t<int> Y,py::array_t<int> X, py::array_t<double>net0, int typ = 1,double thr = 0.0, int signFuncInZero = 1){
+  
+  py::dict results;
+
+  //X
+  py::buffer_info bufX = X.request();
+  int *ptrX = (int *) bufX.ptr;
+  size_t numX = (unsigned int) bufX.shape[0];
+  size_t size = (unsigned int) bufX.shape[1];
+  assert (N == size);
+  //Y
+  py::buffer_info bufY = Y.request();
+  int *ptrY = (int *) bufY.ptr;
+  size_t numY = (unsigned int) bufY.shape[0];
+  size_t sizeY = (unsigned int) bufY.shape[1];
+  assert (N == sizeY);
+  assert (numX == numY);
+  ////net0
+  py::buffer_info bufNet0 = net0.request();
+  double *ptrNet0 = (double *) bufNet0.ptr;
+  unsigned int N0p = (unsigned int) bufNet0.shape[1];
+  unsigned int N0pp = (unsigned int)  bufNet0.shape[0];
+  assert (N == N0p);  // change line 11 # define N 14
+  assert (N == N0pp);  
+
+  //deltas
+  py::array_t<double> deltas = py::array_t<double>(bufX.shape);
+	py::buffer_info bufDeltas = deltas.request();
+  double *ptrDeltas = (double *) bufDeltas.ptr;   
+  py::print("deltas size",bufDeltas.shape); 
+  //update
+  py::array_t<double> update = py::array_t<double>(bufNet0.shape);
+	py::buffer_info bufUpdate = update.request();
+  double *ptrUpdate = (double *) bufUpdate.ptr;
+  
+  //do stuff
+  gradientDescentStep(ptrY,ptrX,numX,ptrNet0,ptrDeltas,ptrUpdate,typ, thr, signFuncInZero);
+  
+  results["update"] = update;
+  results["deltas"] = deltas;
+  return results;
+}
+
 PYBIND11_MODULE(hrnn, m) {
     m.doc() = "run recurrent hopfield neural network"; // optional module docstring
     m.def("runRHNN", &runRHNN, "Runs recurrent neural network");
@@ -585,4 +694,6 @@ PYBIND11_MODULE(hrnn, m) {
     m.def("stateIndex2stateVec", &stateIndex2stateVec, "Returns the binary vector sigma_0 that corresponds to the index m");
     m.def("stateVec2stateIndex", &stateVec2stateIndex, "Returns the index m that corresponds to the binary vector sigma_0");
     m.def("tranCpp", &tranCpp, "transiton function");
+    m.def("transManyStatesCpp", &transManyStatesCpp, "transiton function for array of states");
+    m.def("gradientDescentStepCpp", &gradientDescentStepCpp, "gradien descent step");
 }

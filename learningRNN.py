@@ -176,15 +176,16 @@ def getTrajPy(startm,netx,N,typ,thr,trajSize):
     a = startm
     b = 0
     while (not b in path) and (len(path)<trajSize):
-        #print 'sigma_0',sigma_0,sigma_0.shape,type(sigma_0)
+        #print('sigma_0',sigma_0,sigma_0.shape,type(sigma_0))
         #print 'netx',netx,netx.shape,type(netx)
         sigma_1 = transPy(sigma_0, np.float32(netx), N, typ, thr)
-        #print 'sigma_1',sigma_1,sigma_1.shape,type(sigma_1)
+        sigma_1 = np.array(sigma_1).flatten()
+        #print('sigma_1',sigma_1,sigma_1.shape,type(sigma_1))
         b = stateVec2stateIndex(sigma_1,N,typ)
-        #print a, '->', b
+        #print (a, '->', b)
         path.append(a)
         a = b
-        sigma_0 = sigma_1
+        sigma_0 = sigma_1.T
     if b in path : cycle = path[path.index(b):] 
     else: cycle = []
     #print path[0],path[1]
