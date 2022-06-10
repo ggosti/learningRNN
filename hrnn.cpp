@@ -466,8 +466,7 @@ int stateVec2stateIndex(py::array_t<int> input){
 }
 
 //    transiton function. net1 is the network that generates the ttransitions
-//    If sigma_path0 is a binary vector it generates the corresponding transtions.  
-//    If sigma_path0 is a list of binary vectors it generates a list with the corresponding transtions.    
+//    Sigma_path0 is a binary vector it generates the corresponding transtions.     
 //    typ determins if the neuron activation state is defined in {-1,1} or {0,1} 
 //    typ=1 --> {-1,1}    typ=0 --> {0,1} 
 void trans(int* sigma_path0,int* sigma_path1,double* net,unsigned int size,int typ = 1,int thr = 0,int signFuncInZero = 1) {                           // stato finale espresso come vettore binario
@@ -502,7 +501,7 @@ py::array_t<int> tranCpp(py::array_t<int> sigma_path0,py::array_t<double> net,in
   py::array_t<int> sigma_path1 = py::array_t<int>(N);
 	py::buffer_info bufS1 = sigma_path1.request();
   int *ptrS1 = (int *) bufS1.ptr;
-  //sigma_path1
+  //sigma_path0
   py::buffer_info bufS0 = sigma_path0.request();
   int *ptrS0 = (int *) bufS0.ptr;
   unsigned int size = (unsigned int) bufS0.shape[0];
@@ -529,6 +528,52 @@ py::array_t<int> tranCpp(py::array_t<int> sigma_path0,py::array_t<double> net,in
 	//}
 
   trans(ptrS0, ptrS1, ptrNet, Np, typ, thr, signFuncInZero);
+  
+  return  sigma_path1;
+}
+
+//    transiton function. net1 is the network that generates the ttransitions
+//    sigma_path0 is a array of binary vectors it generates a array with the corresponding transtions.    
+//    typ determins if the neuron activation state is defined in {-1,1} or {0,1} 
+//    typ=1 --> {-1,1}    typ=0 --> {0,1} 
+void trans(int* sigma_path0,int* sigma_path1,double* net,unsigned int size,int typ = 1,int thr = 0,int signFuncInZero = 1) {  
+  //da fare
+} 
+
+py::array_t<int> tranManyStatesCpp(py::array_t<int> sigma_path0,py::array_t<double> net,int typ = 1,double thr = 0,int signFuncInZero = 1){
+  //sigma_path0
+  py::buffer_info bufS0 = sigma_path0.request();
+  int *ptrS0 = (int *) bufS0.ptr;
+  unsigned int numS0 = (unsigned int) bufS0.shape[0];
+  unsigned int size = (unsigned int) bufS0.shape[1];
+  assert (N == size);
+  py::print("numS0",numS0)
+  //sigma_path1
+  py::array_t<int> sigma_path1 = py::array_t<int>(numS0*N);
+	py::buffer_info bufS1 = sigma_path1.request();
+  int *ptrS1 = (int *) bufS1.ptr;
+  //net
+  py::buffer_info bufNet = net.request();
+  double *ptrNet = (double *) bufNet.ptr;
+  unsigned int Np = (unsigned int) bufNet.shape[1];
+  unsigned int Npp = (unsigned int)  bufNet.shape[0];
+  //py::print("N",N);
+  //py::print("Np",Np);
+  //py::print("Npp",Npp);
+  assert (N == Np);  // change line 11 # define N 14
+  assert (N == Npp);
+
+  //// print net
+  //for (unsigned int j=0; j<N;++j){
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(ptrNet[i+j*N]);
+  //    //py::print(i,j,k,ptrNet[i+j*N+k*N*N]);
+  //  }
+  //py::print(j,line);
+	//}
+
+  trans(ptrS0, ptrS1, ptrNet, numS0, N, typ, thr, signFuncInZero);
   
   return  sigma_path1;
 }

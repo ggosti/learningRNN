@@ -35,7 +35,11 @@ print('-->Test transition Cpp',(transition.T[0]==transitionCpp).all())
 
 # generate list of inital states and the corresponding transitions
 initial_state_list = lrnn.stateIndex2stateVecSeq([19,2001,377], N, typ)
+print('initial_state_list')
+print(initial_state_list)
 transition_list = lrnn.transPy(initial_state_list,objective, N, typ, thr)
+print('transition_list')
+print(transition_list)
 
 # generate trajectory
 cycle, trajectory = lrnn.getTrajPy(initial_state_index, objective, N,
