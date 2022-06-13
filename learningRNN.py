@@ -14,6 +14,7 @@ import sys, os
 import pandas as pd
 import networkx as nx
 import numpy as np
+import hrnn
 
 #print('numpy ver', np.__version__)
 
@@ -354,6 +355,7 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
 
     
 def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = False,Xtest=[],ytest=[], Xval=[], yval=[], autapse=False,signFuncInZero=1):
+    sampleRange = 200
     if N == None:
         N = netPars['N']
     assert N == X.shape[1] , 'ERROR!: makeTrainXYfromSeqs was made with trasposed input'
@@ -394,7 +396,7 @@ def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchF
     fullDeltas = []
     start = time.time()
     for j in range(passi):
-        alpha = alpha0* ( (1+alpha0*lbd*j)**(-1))    
+        alpha = alpha0#* ( (1+alpha0*lbd*j)**(-1))    
         if gdStrat == 'SGD':
             update,sumSqrDelta = stochasticGradientDescentStep(y,X,net0,batchSize,netPars)
         if gdStrat == 'GD':
@@ -404,7 +406,8 @@ def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchF
         if gdStrat == 'GDLogistic':
             update,sumSqrDelta,delta,X,logisticDer,gamma = gradientDescentLogisticStep(y,X,k,net0,netPars)
             print(update)
-        if j%(passi/200) == 0:
+        if j%(passi/sampleRange) == 0:
+            #print('j',j,'np.sum(delta**2)',np.sum(delta**2),sumSqrDelta,delta.dtype,update.dtype)
             # if there is test compute score
             if len(Xtest)>0:
                 typ, thr = netPars['typ'],netPars['thr']
@@ -506,6 +509,130 @@ def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchF
             return net0,deltas, fullDeltas,exTime,convStep, bestErrors, bestNet, deltasTest, deltasVal
     else:
         return net0,deltas,fullDeltas,exTime,convStep, bestErrors, bestNet
+
+
+def gradientDescentNSteps(y,X,net0,alpha,NSteps,netPars,autapse = False,normalize = False,signFuncInZero = 1):
+    """
+    gradient descent step for the linear approximation of the activation function gradient
+    """
+    N, typ, thr = netPars['N'],netPars['typ'],netPars['thr']
+    for step in range(NSteps):
+        #yhat = transPy(X, net0, N, typ, thr,signFuncInZero)
+        yhat = hrnn.transManyStatesCpp(X, net0, typ, thr,signFuncInZero)
+        #print 'yhat',yhat
+        delta = (y-yhat)
+        #print delta
+        #print X
+        #Xp = np.delete(X, (i), axis=1)
+        update = np.asmatrix(X).T.dot(np.asmatrix(delta))
+        #print update
+        if not autapse:
+            np.fill_diagonal(update, 0) # important no autapsi!!
+        if not np.isfinite(np.sum(delta**2)):
+            print('net0')
+            print(net0)
+            print('yhat')
+            print(yhat)
+            print('delta')
+            print(delta)
+        #print('step',step,'np.sum(delta**2)',np.sum(delta**2),delta.dtype,update.dtype)
+        net0 += alpha * update.T #- xi * net0
+        if normalize: net0 = rowNorm(net0) 
+    return net0,delta
+
+def runGradientDescentCpp(X,y,alpha0,N=None,alphaHat=None, passi=10**6,runSeed=3098,netPars={'typ':0.0}, verbose = True, xi = 0.0,mexpon=-1.8,normalize = False,Xtest=[],ytest=[], Xval=[], yval=[], autapse=False,signFuncInZero=1):
+    if N == None:
+        N = netPars['N']
+    assert N == X.shape[1] , 'ERROR!: makeTrainXYfromSeqs was made with trasposed input'
+    np.random.seed(runSeed)
+    net0 = np.float32(2*np.random.rand(N,N)-1) #np.zeros((r, w), dtype=np.float32)  # np.float32(np.random.randint(0, 2, size=(r, w)))  # np.float32(2*np.random.rand(r,w)-1)
+    if not autapse: np.fill_diagonal(net0, 0)
+    if normalize: net0 = rowNorm(net0)
+     
+    #print 'start net0'
+    #print net0
+    #print np.sum(np.abs(net0),axis=1)
+    m = X.shape[0]
+    bestErrors = N
+    if verbose: print('m ',m)
+    if alpha0 == 0.0: alpha0 =alphaHat *( m **(-1.0) ) *( N **(mexpon) ) #alpha0 =alphaHat /  ( m *  N**2)
+    if verbose: print('alphaHat',alphaHat,'alpha0',alpha0)
+    
+    sampleRange = 200
+    NSteps=int(passi/sampleRange)
+    print('NSteps',NSteps)
+    
+    
+    typ, thr = netPars['typ'],netPars['thr']
+    convStep = np.inf
+    yhat = transPy(X, net0, N, typ, thr,signFuncInZero)
+    delta = (y-yhat)
+    deltas = [np.sum(delta**2)/m]
+    if len(Xtest)>0:
+        ytesthat = transPy(Xtest, net0, N, typ, thr)
+        deltaTest = (ytest-ytesthat)
+        deltasTest = [np.sum(deltaTest**2)/ytest.shape[0]]
+    if len(Xval)>0:
+        yValhat = transPy(Xval, net0, N, typ, thr)
+        deltaVal = (yval-yValhat)
+        deltasVal = [np.sum(deltaVal**2)/yval.shape[0]]
+    start = time.time()
+    for j in range(sampleRange):
+        net0,delta = gradientDescentNSteps(y,X,net0,alpha0,NSteps,netPars,autapse,normalize,signFuncInZero)
+        sumSqrDelta = np.sum(delta**2)
+        #print('j',j,'np.sum(delta**2)',np.sum(delta**2))
+        if not np.isfinite(sumSqrDelta):
+            break
+        if len(Xtest)>0:
+            ytesthat = transPy(Xtest, net0, N, typ, thr)
+            deltaTest = (ytest-ytesthat)
+            deltaTest = np.sum(deltaTest**2)
+            deltasTest.append(deltaTest/ytest.shape[0])
+        if len(Xval)>0:
+            yValhat = transPy(Xval, net0, N, typ, thr)
+            deltaVal = (yval-yValhat)
+            deltaVal = np.sum(deltaVal**2)
+            deltasVal.append(deltaVal/yval.shape[0])
+        #print j
+        #print 'yhat '
+        #print yhat,yhat.shape
+        #print 'sumSqrDelta ', sumSqrDelta
+        #print 'accuracy ', (sumSqrDelta/m) - (fullSumSqrDelta/y.shape[0]),' alpha ',alpha
+        deltas.append(sumSqrDelta/m)
+        if sumSqrDelta == 0.0:
+            deltas.append(sumSqrDelta/m)
+            if len(Xtest)>0:
+                deltasTest.append(deltaTest/ytest.shape[0])
+            if len(Xval)>0:
+                deltasVal.append(deltaVal/yval.shape[0])
+            convStep = j*NSteps
+            if verbose: print('final sumSqrDelta/m ', sumSqrDelta/m)
+            break
+        #print 'mean update.T', np.mean(np.abs(update.T))
+        #print 'mean alpha * update.T', np.mean(np.abs(alpha * update.T))
+        #print 'mean net0', np.mean(np.abs(net0))
+        #net0 += alpha * update.T - xi * net0
+        if sumSqrDelta/y.shape[0]<bestErrors:
+            bestErrors = sumSqrDelta/y.shape[0]
+            bestNet = net0.copy()
+        #net0[net0>1] = 1
+        #net0[net0<-1] = -1
+        #if normalize: net0 = rowNorm(net0)
+        #print 'net0',net0.shape
+    if verbose: print('final sumSqrDelta ', sumSqrDelta,not np.isfinite(sumSqrDelta))
+    if verbose: print('final sumSqrDelta/m ', sumSqrDelta/m)
+    if not np.isfinite(sumSqrDelta):
+        print(deltas)
+    end = time.time()
+    exTime = end - start
+    if verbose: print('decent time', exTime)
+    if (len(Xtest)>0) and (len(Xval)==0):
+        return net0,deltas,exTime,convStep, bestErrors, bestNet, deltasTest
+    if (len(Xtest)>0) and (len(Xval)>0):
+            return net0,deltas,exTime,convStep, bestErrors, bestNet, deltasTest, deltasVal
+    else:
+        return net0,deltas,exTime,convStep, bestErrors, bestNet
+
 
 def thFPostiveFNegativeTPFSignRatios(netObj,net0,thRate = 1.0):
     from skimage.filters import threshold_otsu

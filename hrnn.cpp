@@ -29,7 +29,7 @@
 
 #define HASH_MULT  314159    /* random multiplier */
 #define HASH_PRIME 516595003 /* the 27182818th prime; it's $\leq 2^{29}$ */
-#define N 14//14//5//14
+#define N 26//14//5//14
 
 
 using namespace std;
@@ -671,12 +671,12 @@ py::dict gradientDescentStepCpp(py::array_t<int> Y,py::array_t<int> X, py::array
 
   //deltas
   py::array_t<double> deltas = py::array_t<double>(bufX.shape);
-	py::buffer_info bufDeltas = deltas.request();
+  py::buffer_info bufDeltas = deltas.request();
   double *ptrDeltas = (double *) bufDeltas.ptr;   
   py::print("deltas size",bufDeltas.shape); 
   //update
   py::array_t<double> update = py::array_t<double>(bufNet0.shape);
-	py::buffer_info bufUpdate = update.request();
+  py::buffer_info bufUpdate = update.request();
   double *ptrUpdate = (double *) bufUpdate.ptr;
   
   //do stuff

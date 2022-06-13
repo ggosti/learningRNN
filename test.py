@@ -1,8 +1,10 @@
 import learningRNN as lrnn
 import numpy as np
 import hrnn
+import time
+import matplotlib.pyplot as plt
 
-N= 14 # Number of neurons
+N= 26 # Number of neurons
 typ = 0 # typ = 0 neurons with binary activation states {0,1}, typ = 0  neurons with states {-1,1}
 thr = 0.0 # activation function threshold
 nP = {"N":N, "typ":typ, "thr": thr}
@@ -62,11 +64,26 @@ for i,sm in enumerate(seeds):
 X_train, Y_train = lrnn.makeTrainXYfromSeqs(seqs, nP, isIndex= True)
 print('Y_train',Y_train.dtype)
 
+t1= time.time()
+transition_list = lrnn.transPy(X_train,objective, N, typ, thr)
+t2= time.time()
+transitionCpp = hrnn.transManyStatesCpp(X_train,objective, typ, thr,1)
+t3= time.time()
+print('pyhton prediction time',t2-t1)
+print('cpp prediction time',t3-t2)
+
+
 net0 = np.float64(2*np.random.rand(N,N)-1) #np.zeros((r, w), dtype=np.float32)  # np.float32(np.random.randint(0, 2, size=(r, w)))  # np.float32(2*np.random.rand(r,w)-1)
 net0 = lrnn.rowNorm(net0)
-update,sumSqdelta,delta,_ = lrnn.gradientDescentStep(Y_train,X_train,net0,netPars=nP,autapse = False,signFuncInZero = 1)
+t1= time.time()
+update,sumSqdelta,delta,_ = lrnn.gradientDescentStep(Y_train,X_train,net0,netPars=nP,autapse = True,signFuncInZero = 1)
+t2= time.time()
 
 results = hrnn.gradientDescentStepCpp(Y_train,X_train,net0,typ,thr, 1)
+t3= time.time()
+
+print('pyhton',t2-t1)
+print('cpp',t3-t2)
 print('results',results.keys())
 #print('deltas',results['deltas'])
 #print('deltas',delta)
@@ -76,29 +93,52 @@ print('update',update)
 print('--> Test update',np.mean(results['update']-update))
 
 # set the gradient descent hyperparameters
-T = 3000 # Number of gradient descent steps
+T = 3000#3000 # Number of gradient descent steps
 alpha = 10
 
 # run gradient descent
-trained_matrix, deltas, fullDeltas, exTime, convStep, bestErrors, bestNet =\
+trained_matrix, deltas, fullDeltas, exTime, convStep, bestErrors, bestNet=\
      lrnn.runGradientDescent(X_train, Y_train, alpha0= 0.0, alphaHat=alpha,
                              batchFr = 1.0, passi=T, runSeed = 3198, gdStrat="GD", k=1, netPars=nP,
                              showGradStep= False, xi= 0.000, mexpon = -1.5,normalize=True)
 
 # see results
-import matplotlib.pyplot as plt
+
 plt.figure()
-if np.isinf(convStep):
-    plt.plot(range(0,T,int(T/200)),deltas,label='Train alpha '+str(alpha))
-    plt.semilogy()
-else:
-    plt.plot(range(0,convStep+int(T/200),int(T/200)),deltas,label='Train alpha '+str(alpha))
-    plt.semilogy()
-plt.legend()
+#if np.isinf(convStep):
+#    plt.plot(range(0,T,int(T/200)),deltas,label='Train alpha '+str(alpha))
+#    plt.semilogy()
+#else:
+#    plt.plot(range(0,convStep+int(T/200),int(T/200)),deltas,label='Train alpha '+str(alpha))
+#    plt.semilogy()
+#plt.legend()
+plt.plot(deltas)
+
+
+
+
+# run gradient descent
+trained_matrix, deltas, exTime, convStep, bestErrors, bestNet =\
+     lrnn.runGradientDescentCpp(X_train, Y_train, alpha0= 0.0, alphaHat=alpha,
+                             passi=T, runSeed = 3198, netPars=nP,
+                             xi= 0.000, mexpon = -1.5,normalize=True)
+
+# see results
+#if np.isinf(convStep):
+#    plt.plot(range(0,T,int(T/200)),deltas,label='Train alpha '+str(alpha))
+#    plt.semilogy()
+#else:
+#    plt.plot(range(0,convStep+int(T/200),int(T/200)),deltas,label='Train alpha '+str(alpha))
+#    plt.semilogy()
+#plt.legend()
+plt.plot(deltas)
+
+
 
 fig, (ax1,ax2)= plt.subplots(2)
 ax1.set_title('objective')
 ax1.imshow(objective)
 ax2.set_title('trained_matrix')
 ax2.imshow(trained_matrix)
+
 plt.show(block=True)
