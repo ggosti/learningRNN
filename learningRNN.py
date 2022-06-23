@@ -515,6 +515,7 @@ def gradientDescentNSteps(y,X,net0,alpha,NSteps,netPars,autapse = False,normaliz
     """
     gradient descent step for the linear approximation of the activation function gradient
     """
+    print('NSteps',NSteps)
     N, typ, thr = netPars['N'],netPars['typ'],netPars['thr']
     for step in range(NSteps):
         #yhat = transPy(X, net0, N, typ, thr,signFuncInZero)
@@ -536,6 +537,8 @@ def gradientDescentNSteps(y,X,net0,alpha,NSteps,netPars,autapse = False,normaliz
             print('delta')
             print(delta)
         #print('step',step,'np.sum(delta**2)',np.sum(delta**2),delta.dtype,update.dtype)
+        #print('step',step,'net0',net0[0,0],'alpha',alpha,'update',update.T[0,0])
+        #print('step',step,'net0',net0[0,1],'alpha',alpha,'update',update.T[0,1])
         net0 += alpha * update.T #- xi * net0
         if normalize: net0 = rowNorm(net0) 
     return net0,delta

@@ -26,10 +26,15 @@
 #include <cmath>
 #include <chrono>
 #include <random>
+extern "C"
+{    
+    #include <cblas.h> 
+}
+//#include <oneapi/mkl.hpp>
 
 #define HASH_MULT  314159    /* random multiplier */
 #define HASH_PRIME 516595003 /* the 27182818th prime; it's $\leq 2^{29}$ */
-#define N 26//14//5//14
+#define N 12//14//5//14
 
 
 using namespace std;
@@ -537,6 +542,7 @@ py::array_t<int> tranCpp(py::array_t<int> sigma_path0,py::array_t<double> net,in
 //    typ determins if the neuron activation state is defined in {-1,1} or {0,1} 
 //    typ=1 --> {-1,1}    typ=0 --> {0,1} 
 void trans(int* sigma_path0,int* sigma_path1,double* net, unsigned int numS0 ,unsigned int size,int typ = 1,int thr = 0,int signFuncInZero = 1) {  
+  unsigned int k,j,i;
   double v[numS0*N];
   int temp;
   assert(N==size);
@@ -552,9 +558,17 @@ void trans(int* sigma_path0,int* sigma_path1,double* net, unsigned int numS0 ,un
   //py::print(j,line);
 	//}
   //py::print("N",N);
+  //printf("S0 Cpp\n");
+  //for (i = 0; i<3; ++i)//numS0
+  //{
+  //  for (j = 0; j<N; ++j)
+  //  printf("%2.2f ", (double) sigma_path0[i * N + j]);
+  //  putchar('\n');
+  //}
+  
   // compute activation
   double o;
-  unsigned int k,j,i;
+
   for (k = 0; k < numS0; ++k) {
     //py::print("k",k);
     for (j = 0; j < N; ++j) {
@@ -571,6 +585,14 @@ void trans(int* sigma_path0,int* sigma_path1,double* net, unsigned int numS0 ,un
       //py::print("j",j,o,"=",line);
     }
   }
+
+  //printf("v Cpp\n");
+  //for (i = 0; i<3; ++i)//numS0
+  //{
+  //  for (j = 0; j<N; ++j)
+  //  printf("%2.2f ", v[i * N + j]);
+  //  putchar('\n');
+  //}
 
   //sigma_path1 = net1.dot(sigma_path0.T)
   // Heavyside for each element in v 
@@ -616,7 +638,165 @@ py::array_t<int> transManyStatesCpp(py::array_t<int> sigma_path0,py::array_t<dou
   //py::print(j,line);
 	//}
 
+  //py::print("ptrS0\n");
+  //for (unsigned int j=0; j<3;++j){ //numX
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(ptrS0[i+j*N]);
+  //    //py::print(i,j,k,ptrNet[i+j*N+k*N*N]);
+  //  }
+  //py::print(j,line);
+  //}
+
   trans(ptrS0, ptrS1, ptrNet, numS0, N, typ, thr, signFuncInZero);
+  
+  //py::print("ptrS1\n");
+  //for (unsigned int j=0; j<3;++j){ //numX
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(ptrS1[i+j*N]);
+  //    //py::print(i,j,k,ptrNet[i+j*N+k*N*N]);
+  //  }
+  //py::print(j,line);
+  //}
+  
+  return  sigma_path1;
+}
+
+
+//    transiton function. net1 is the network that generates the ttransitions
+//    sigma_path0 is a array of binary vectors it generates a array with the corresponding transtions.    
+//    typ determins if the neuron activation state is defined in {-1,1} or {0,1} 
+//    typ=1 --> {-1,1}    typ=0 --> {0,1} 
+void transCBLAS(int* sigma_path0,int* sigma_path1,double* net, unsigned int numS0 ,unsigned int size,int typ = 1,double thr = 0,int signFuncInZero = 1) {  
+  //double Vt[numS0*N];
+  //py::print("pars", numS0, N,typ, thr, signFuncInZero);
+  double V[numS0*N];
+  int temp;
+  assert(N==size);
+  unsigned int i,j;
+  
+  int l=N; //number of rows in C, number of rows in A
+  int n=numS0; //number of columns in C, number of row in B
+  int m=N; //number of columns in A, number of columns in B
+  //double V[numS0*N];
+  double S0[numS0*N];
+  for (j = 0; j<numS0*N; ++j) S0[j] = (double) sigma_path0[j];
+  //printf("Check Trans CBlas\n");
+  //printf("S0 CBlas\n");
+  //for (i = 0; i<3; ++i)//numS0
+  //{
+  //  for (j = 0; j<N; ++j)
+  //  printf("%2.2f ", S0[i * N + j]);
+  //  putchar('\n');
+  //}
+
+  //printf("net CBlas\n");
+  //for (i = 0; i<N; ++i)//numS0
+  //{
+  //  for (j = 0; j<N; ++j)
+  //  printf("%2.2f ", net[i * N + j]);
+  //  putchar('\n');
+  //}
+  
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, n, l, m, 1.0, S0, m, net, m,  0.0, V, l);
+
+  //for (i = 0; i<N; ++i)//numS0
+  //{
+  //  for (j = 0; j<numS0; ++j)
+  //  V[i * N + j] = Vt[i + j * numS0];
+  //}
+
+  //printf("V CBlas\n");
+  //for (i = 0; i<3; ++i)//numS0
+  //{
+  //  for (j = 0; j<N; ++j)
+  //  printf("%2.2f ", V[i * N + j]);
+  //  putchar('\n');
+  //}
+
+  //sigma_path1 = net1.dot(sigma_path0.T)
+  // Heavyside for each element in v 
+  for (i = 0; i < numS0*N; ++i) {
+    temp = (V[i] > thr);//>= thr);  for backwords comparrison
+    //py::print("i",i,v[i],temp );
+    temp += (temp==0)*(V[i] == thr)*signFuncInZero;  //
+    //py::print("i",i,v[i],temp );
+    sigma_path1[i]=(1-typ + temp)/(2-typ);
+  }  
+  //sigma_path1 = (1-typ + sign(sigma_path1 +thr,signFuncInZero) )/(2-typ)
+  //printf("S1 CBlas %f\n",thr);
+  //for (i = 0; i<3; ++i)//numS0
+  //{
+  //  for (j = 0; j<N; ++j)
+  //  printf("%d ", sigma_path1[i * N + j]);
+  //  putchar('\n');
+  //}
+} 
+
+py::array_t<int> transManyStatesCBlas(py::array_t<int> sigma_path0,py::array_t<double> net,int typ = 1,double thr = 0,int signFuncInZero = 1){
+  //sigma_path0
+  py::buffer_info bufS0 = sigma_path0.request();
+  int *ptrS0 = (int *) bufS0.ptr;
+  size_t numS0 = (unsigned int) bufS0.shape[0];
+  size_t size = (unsigned int) bufS0.shape[1];
+  assert (N == size);
+  //sigma_path1
+  py::array_t<int> sigma_path1 = py::array_t<int>(bufS0.shape);
+	py::buffer_info bufS1 = sigma_path1.request();
+  int *ptrS1 = (int *) bufS1.ptr;
+  //net
+  py::buffer_info bufNet = net.request();
+  double *ptrNet = (double *) bufNet.ptr;
+  unsigned int Np = (unsigned int) bufNet.shape[1];
+  unsigned int Npp = (unsigned int)  bufNet.shape[0];
+  //py::print("N",N);
+  //py::print("Np",Np);
+  //py::print("Npp",Npp);
+  assert (N == Np);  // change line 11 # define N 14
+  assert (N == Npp);
+
+  //// print net
+  //for (unsigned int j=0; j<N;++j){
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(ptrNet[i+j*N]);
+  //    //py::print(i,j,k,ptrNet[i+j*N+k*N*N]);
+  //  }
+  //py::print(j,line);
+	//}
+
+  //py::print("ptrS0\n");
+  //for (unsigned int j=0; j<3;++j){ //numX
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(ptrS0[i+j*N]);
+  //    //py::print(i,j,k,ptrNet[i+j*N+k*N*N]);
+  //  }
+  //py::print(j,line);
+  //}
+
+  //trans(ptrS0, ptrS1, ptrNet, numS0, N, typ, thr, signFuncInZero);
+  unsigned int numX = numS0;
+  int Ypred[numX*N];
+  unsigned int i;
+  //for(i=0; i<numX*N; i++){
+  //  Ypred[i] = 0;
+  //}
+  transCBLAS(ptrS0, Ypred, ptrNet, numS0, N, typ, thr, signFuncInZero);
+  for(i=0; i<numX*N; i++){
+    ptrS1[i]=Ypred[i];
+  }
+
+  //py::print("ptrS1\n");
+  //for (unsigned int j=0; j<3;++j){ //numX
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(ptrS1[i+j*N]);
+  //    //py::print(i,j,k,ptrNet[i+j*N+k*N*N]);
+  //  }
+  //py::print(j,line);
+  //}
   
   return  sigma_path1;
 }
@@ -627,9 +807,38 @@ void gradientDescentStep(int* ptrY, int* ptrX, unsigned int numX, double* ptrNet
   //py::array_t<int> Ypred = py::array_t<int>(N*numX);
 	//py::buffer_info bufYpred = Ypred.request();
   //int *ptrYpred = (int *) bufYpred.ptr;
+  
+  //py::print("ptrX");
+  //for (unsigned int j=0; j<5;++j){ //numX
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(ptrX[i+j*N]);
+  //    //py::print(i,j,k,ptrNet[i+j*N+k*N*N]);
+  //  }
+  //py::print(j,line);
+  //}
+  
+  //py::print("ptrNet0");
+  //for (unsigned int j=0; j<5;++j){ //numX
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(ptrNet0[i+j*N]);
+  //  }
+  //py::print(j,line);
+  //}
+  //py::print("pars", numX, N,typ, thr, signFuncInZero);
+  
   int Ypred[numX*N];
-
   trans(ptrX, Ypred, ptrNet0, numX, N,typ, thr, signFuncInZero);
+  //py::print("Ypred");
+  //for (unsigned int j=0; j<5;++j){//numX
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(Ypred[i+j*N]);
+  //    //py::print(i,j,k,ptrNet[i+j*N+k*N*N]);
+  //  }
+  //py::print(j,line);
+  //}
   for(i=0; i<numX*N; i++){
     ptrDeltas[i] = ptrY[i] - Ypred[i];
   } 
@@ -641,8 +850,12 @@ void gradientDescentStep(int* ptrY, int* ptrX, unsigned int numX, double* ptrNet
         ptrUpdate[i+N*j] += ptrDeltas[i+N*k] * ptrX[j+N*k];
       }
     }
-  } 
+  }
+  
+  
+  
 }
+
 
 py::dict gradientDescentStepCpp(py::array_t<int> Y,py::array_t<int> X, py::array_t<double>net0, int typ = 1,double thr = 0.0, int signFuncInZero = 1){
   
@@ -687,6 +900,195 @@ py::dict gradientDescentStepCpp(py::array_t<int> Y,py::array_t<int> X, py::array
   return results;
 }
 
+
+void gradientDescentStepCBlasCode(int* ptrY, int* ptrX, unsigned int numX, double* ptrNet0, double* ptrDeltas, double* ptrUpdate, int typ, double thr, int signFuncInZero){
+  unsigned int i,j,k;
+
+  //py::array_t<int> Ypred = py::array_t<int>(N*numX);
+	//py::buffer_info bufYpred = Ypred.request();
+  //int *ptrYpred = (int *) bufYpred.ptr;
+
+  //py::print("ptrX CBlas");
+  //for (unsigned int j=0; j<5;++j){ //numX
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(ptrX[i+j*N]);
+  //    //py::print(i,j,k,ptrNet[i+j*N+k*N*N]);
+  //  }
+  //py::print(j,line);
+  //}
+
+  //py::print("ptrNet0 CBlas");
+  //for (unsigned int j=0; j<5;++j){ //numX
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(ptrNet0[i+j*N]);
+  //  }
+  //py::print(j,line);
+  //}
+  //py::print("pars", numX, N,typ, thr, signFuncInZero);
+
+  int Ypred[numX*N];
+  //for(i=0; i<numX*N; i++){
+  //  Ypred[i] = 0;
+  //}
+  //trans(ptrX, Ypred, ptrNet0, numX, N,typ, thr, signFuncInZero);
+  transCBLAS(ptrX,Ypred, ptrNet0, numX , N, thr, thr, signFuncInZero);
+
+  //py::print("Ypred CBlas");
+  //for (unsigned int j=0; j<5;++j){ //numX
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(Ypred[i+j*N]);
+  //    //py::print(i,j,k,ptrNet[i+j*N+k*N*N]);
+  //  }
+  //py::print(j,line);
+  //}
+  for(i=0; i<numX*N; i++){
+    ptrDeltas[i] = ptrY[i] - Ypred[i];
+  }
+
+  for(j=0; j<N; j++){
+    for(i=0; i<N; i++){
+      ptrUpdate[i+N*j] = 0;
+      for(k=0;k<numX;k++){
+        ptrUpdate[i+N*j] += ptrDeltas[i+N*k] * ptrX[j+N*k];
+      }
+    }
+  }
+  
+  
+  
+}
+
+py::dict gradientDescentStepCblas(py::array_t<int> Y,py::array_t<int> X, py::array_t<double>net0, int typ = 1,double thr = 0.0, int signFuncInZero = 1){
+  
+  py::dict results;
+
+  //X
+  py::buffer_info bufX = X.request();
+  int *ptrX = (int *) bufX.ptr;
+  size_t numX = (unsigned int) bufX.shape[0];
+  size_t size = (unsigned int) bufX.shape[1];
+  assert (N == size);
+  //Y
+  py::buffer_info bufY = Y.request();
+  int *ptrY = (int *) bufY.ptr;
+  size_t numY = (unsigned int) bufY.shape[0];
+  size_t sizeY = (unsigned int) bufY.shape[1];
+  assert (N == sizeY);
+  assert (numX == numY);
+  ////net0
+  py::buffer_info bufNet0 = net0.request();
+  double *ptrNet0 = (double *) bufNet0.ptr;
+  unsigned int N0p = (unsigned int) bufNet0.shape[1];
+  unsigned int N0pp = (unsigned int)  bufNet0.shape[0];
+  assert (N == N0p);  // change line 11 # define N 14
+  assert (N == N0pp);  
+
+  //deltas
+  py::array_t<double> deltas = py::array_t<double>(bufX.shape);
+  py::buffer_info bufDeltas = deltas.request();
+  double *ptrDeltas = (double *) bufDeltas.ptr;   
+  py::print("deltas size",bufDeltas.shape); 
+  //update
+  py::array_t<double> update = py::array_t<double>(bufNet0.shape);
+  py::buffer_info bufUpdate = update.request();
+  double *ptrUpdate = (double *) bufUpdate.ptr;
+  
+  //do stuff
+  gradientDescentStepCBlasCode(ptrY,ptrX,numX,ptrNet0,ptrDeltas,ptrUpdate,typ, thr, signFuncInZero);
+  
+  results["update"] = update;
+  results["deltas"] = deltas;
+  return results;
+}
+
+void gradientDescentNSteps(int* ptrY,int* ptrX, unsigned int numX,
+                             double* ptrNet0, double* ptrNet1, double* ptrDeltas,
+                             double alpha,unsigned int NSteps, 
+                             int typ, double thr, int signFuncInZero){
+  unsigned int step,i,j,k;
+
+  //py::array_t<int> Ypred = py::array_t<int>(N*numX);
+	//py::buffer_info bufYpred = Ypred.request();
+  //int *ptrYpred = (int *) bufYpred.ptr;
+  int Ypred[numX*N];
+  double update[N*N];
+  for(i=0; i<N*N; i++){ 
+    ptrNet1[i] = ptrNet0[i];
+  }
+
+  py::print("NSteps",NSteps);
+  for(step=0; step<NSteps; step++){
+    trans(ptrX, Ypred, ptrNet1, numX, N,typ, thr, signFuncInZero);
+    for(i=0; i<numX*N; i++){
+      ptrDeltas[i] = ptrY[i] - Ypred[i];
+    } 
+
+    for(j=0; j<N; j++){
+      for(i=0; i<N; i++){
+        update[i+N*j] = 0;
+        for(k=0;k<numX;k++){
+          update[i+N*j] += ptrDeltas[j+N*k] * ptrX[i+N*k];
+        }
+      }
+    }
+    //py::print("net0",ptrNet0[0],"alpha",alpha,"update",update[0]); 
+    //py::print("net0",ptrNet0[1],"alpha",alpha,"update",update[1]); 
+    for(j=0; j<N; j++){
+      for(i=0; i<N; i++){ 
+        ptrNet1[i+N*j] += alpha * update[i+N*j];
+      }
+    }
+    //py::print("net1",ptrNet1[0]);
+  }
+}
+
+py::dict gradientDescentNStepsCpp(py::array_t<int> Y,py::array_t<int> X, py::array_t<double>net0, double alpha, unsigned int NSteps, int typ = 1,double thr = 0.0, int signFuncInZero = 1){
+  
+  py::dict results;
+
+  //X
+  py::buffer_info bufX = X.request();
+  int *ptrX = (int *) bufX.ptr;
+  size_t numX = (unsigned int) bufX.shape[0];
+  size_t size = (unsigned int) bufX.shape[1];
+  assert (N == size);
+  //Y
+  py::buffer_info bufY = Y.request();
+  int *ptrY = (int *) bufY.ptr;
+  size_t numY = (unsigned int) bufY.shape[0];
+  size_t sizeY = (unsigned int) bufY.shape[1];
+  assert (N == sizeY);
+  assert (numX == numY);
+  ////net0
+  py::buffer_info bufNet0 = net0.request();
+  double *ptrNet0 = (double *) bufNet0.ptr;
+  unsigned int N0p = (unsigned int) bufNet0.shape[1];
+  unsigned int N0pp = (unsigned int)  bufNet0.shape[0];
+  assert (N == N0p);  // change line 11 # define N 14
+  assert (N == N0pp);  
+
+  //deltas
+  py::array_t<double> deltas = py::array_t<double>(bufX.shape);
+  py::buffer_info bufDeltas = deltas.request();
+  double *ptrDeltas = (double *) bufDeltas.ptr;   
+  py::print("deltas size",bufDeltas.shape); 
+  //update
+  py::array_t<double> net1 = py::array_t<double>(bufNet0.shape);
+  py::buffer_info bufNet1 = net1.request();
+  double *ptrNet1= (double *) bufNet1.ptr;
+  
+  //do stuff
+  gradientDescentNSteps(ptrY,ptrX,numX,ptrNet0,ptrNet1,ptrDeltas,alpha,NSteps,typ, thr, signFuncInZero);
+  
+  results["net"] = net1;
+  results["deltas"] = deltas;
+  return results;
+}
+
+
 PYBIND11_MODULE(hrnn, m) {
     m.doc() = "run recurrent hopfield neural network"; // optional module docstring
     m.def("runRHNN", &runRHNN, "Runs recurrent neural network");
@@ -695,5 +1097,8 @@ PYBIND11_MODULE(hrnn, m) {
     m.def("stateVec2stateIndex", &stateVec2stateIndex, "Returns the index m that corresponds to the binary vector sigma_0");
     m.def("tranCpp", &tranCpp, "transiton function");
     m.def("transManyStatesCpp", &transManyStatesCpp, "transiton function for array of states");
+    m.def("transManyStatesCBlas", &transManyStatesCBlas, "transiton function for array of states");
     m.def("gradientDescentStepCpp", &gradientDescentStepCpp, "gradien descent step");
+    m.def("gradientDescentStepCblas", &gradientDescentStepCblas, "gradien descent step");
+    m.def("gradientDescentNStepsCpp", &gradientDescentNStepsCpp, "gradien descent N step");
 }
