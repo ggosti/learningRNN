@@ -91,33 +91,60 @@ net0 = np.float64(2*np.random.rand(N,N)-1) #np.zeros((r, w), dtype=np.float32)  
 net0 = lrnn.rowNorm(net0)
 obj=net0.copy()
 t1= time.time()
-update,sumSqdelta,delta,_ = lrnn.gradientDescentStep(Y_train,X_train,net0,netPars=nP,autapse = True,signFuncInZero = 1)
+update,sumSqdelta,delta,_ = lrnn.gradientDescentStep(Y_train,X_train,net0,netPars=nP,autapse = False,signFuncInZero = 1)
 t2= time.time()
 
-results = hrnn.gradientDescentStepCpp(Y_train,X_train,net0,typ,thr, 1)
+results = hrnn.gradientDescentStepCpp(Y_train,X_train,net0,typ,thr, 1, 0)
 t3= time.time()
 
-resultsCblas = hrnn.gradientDescentStepCblas(Y_train,X_train,net0,typ,thr, 1)
+resultsCblas = hrnn.gradientDescentStepCblas(Y_train,X_train,net0,typ,thr, 1,0)
 t4= time.time()
 
 print('gradeint descent step pyhton',t2-t1)
 print('gradeint descent step cpp',t3-t2)
 print('gradeint descent step Cblas cpp',t4-t3)
-print('gradeint descent step results',results.keys())
+#print('gradeint descent step results',results.keys())
+#print('deltas Cblas shape',resultsCblas['deltas'].shape)
+#print('deltas shape',delta.shape)
+#print('deltas Cblas',resultsCblas['deltas'])
+#print('deltas',delta)
+print('--> Test deltas', (results['deltas']==delta).all() )
+#print('update cpp',results['update'])
+#print('update',update)
+print('--> Test deltas Cblas', (resultsCblas['deltas']==delta).all() )
+print('--> Test update',np.sum((results['update']-update)**2))
+print('--> Test update Cblas',np.sum((resultsCblas['update']-update)**2))
+
+
+t1= time.time()
+update,sumSqdelta,delta,_ = lrnn.gradientDescentStep(Y_train,X_train,net0,netPars=nP,autapse = True,signFuncInZero = 1)
+t2= time.time()
+
+results = hrnn.gradientDescentStepCpp(Y_train,X_train,net0,typ,thr, 1, 1)
+t3= time.time()
+
+resultsCblas = hrnn.gradientDescentStepCblas(Y_train,X_train,net0,typ,thr, 1,1)
+t4= time.time()
+
+print('gradeint descent autapse step pyhton',t2-t1)
+print('gradeint descent autapse step cpp',t3-t2)
+print('gradeint descent autapse step Cblas cpp',t4-t3)
+#print('gradeint descent step results',results.keys())
 
 
 #print('deltas Cblas shape',resultsCblas['deltas'].shape)
 #print('deltas shape',delta.shape)
 #print('deltas Cblas',resultsCblas['deltas'])
 #print('deltas',delta)
-print('--> Test deltas', (results['deltas']==delta).all() )
-print('--> Test deltas Cblas', (resultsCblas['deltas']==delta).all() )
-#print('update',results['update'])
+print('--> Test deltas autapse', (results['deltas']==delta).all() )
+#print('update cpp',results['update'])
 #print('update',update)
-print('--> Test update',np.sum((results['update']-update)**2))
-print('--> Test update Cblas',np.sum((resultsCblas['update']-update)**2))
+print('--> Test deltas Cblas autapse', (resultsCblas['deltas']==delta).all() )
+print('--> Test update autapse',np.sum((results['update']-update)**2))
+print('--> Test update Cblas autapse',np.sum((resultsCblas['update']-update)**2))
 
 
+"""
 alpha = 0.00001
 NSteps= 100
 
@@ -149,7 +176,7 @@ print('--> Test net0',np.sum((results['net']-net1)**2))
 print('--> Test net0 cblas',np.sum((resultsCblas['net']-net1)**2))
 
 
-"""
+
 # set the gradient descent hyperparameters
 T = 3000#3000 # Number of gradient descent steps
 alpha = 10

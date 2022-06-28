@@ -799,7 +799,7 @@ py::array_t<int> transManyStatesCBlas(py::array_t<double> sigma_path0,py::array_
   return  sigma_path1;
 }
 
-void gradientDescentStep(int* ptrY, int* ptrX, unsigned int numX, double* ptrNet0, double* ptrDeltas, double* ptrUpdate, int typ, double thr, int signFuncInZero){
+void gradientDescentStep(int* ptrY, int* ptrX, unsigned int numX, double* ptrNet0, double* ptrDeltas, double* ptrUpdate, int typ, double thr, int signFuncInZero, int autapse = 0){
   unsigned int i,j,k;
 
   //py::array_t<int> Ypred = py::array_t<int>(N*numX);
@@ -850,12 +850,18 @@ void gradientDescentStep(int* ptrY, int* ptrX, unsigned int numX, double* ptrNet
     }
   }
   
+  py::print("autapse",autapse);
+  if (autapse == 0){
+    for(i=0; i<N; i++)
+      ptrUpdate[i+N*i] = 0;
+  }
+  
   
   
 }
 
 
-py::dict gradientDescentStepCpp(py::array_t<int> Y,py::array_t<int> X, py::array_t<double>net0, int typ = 1,double thr = 0.0, int signFuncInZero = 1){
+py::dict gradientDescentStepCpp(py::array_t<int> Y,py::array_t<int> X, py::array_t<double>net0, int typ = 1,double thr = 0.0, int signFuncInZero = 1, int autapse = 0){
   
   py::dict results;
 
@@ -891,7 +897,7 @@ py::dict gradientDescentStepCpp(py::array_t<int> Y,py::array_t<int> X, py::array
   double *ptrUpdate = (double *) bufUpdate.ptr;
   
   //do stuff
-  gradientDescentStep(ptrY,ptrX,numX,ptrNet0,ptrDeltas,ptrUpdate,typ, thr, signFuncInZero);
+  gradientDescentStep(ptrY,ptrX,numX,ptrNet0,ptrDeltas,ptrUpdate,typ, thr, signFuncInZero,autapse);
   
   results["update"] = update;
   results["deltas"] = deltas;
@@ -899,7 +905,7 @@ py::dict gradientDescentStepCpp(py::array_t<int> Y,py::array_t<int> X, py::array
 }
 
 
-void gradientDescentStepCBlasCode(double* ptrY, double* ptrX, unsigned int numX, double* ptrNet0, double* ptrDeltas, double* ptrUpdate, int typ, double thr, int signFuncInZero){
+void gradientDescentStepCBlasCode(double* ptrY, double* ptrX, unsigned int numX, double* ptrNet0, double* ptrDeltas, double* ptrUpdate, int typ, double thr, int signFuncInZero, int autapse = 0){
   unsigned int i;
 
   //py::array_t<int> Ypred = py::array_t<int>(N*numX);
@@ -979,9 +985,15 @@ void gradientDescentStepCBlasCode(double* ptrY, double* ptrX, unsigned int numX,
   //py::print(j,line);
   //} 
   
+  py::print("autapse",autapse);
+  if (autapse == 0){
+    for(i=0; i<N; i++)
+      ptrUpdate[i+N*i] = 0;
+  }
+  
 }
 
-py::dict gradientDescentStepCblas(py::array_t<double> Y,py::array_t<double> X, py::array_t<double>net0, int typ = 1,double thr = 0.0, int signFuncInZero = 1){
+py::dict gradientDescentStepCblas(py::array_t<double> Y,py::array_t<double> X, py::array_t<double>net0, int typ = 1,double thr = 0.0, int signFuncInZero = 1, int autapse = 0){
   
   py::dict results;
 
@@ -1017,7 +1029,7 @@ py::dict gradientDescentStepCblas(py::array_t<double> Y,py::array_t<double> X, p
   double *ptrUpdate = (double *) bufUpdate.ptr;
   
   //do stuff
-  gradientDescentStepCBlasCode(ptrY,ptrX,numX,ptrNet0,ptrDeltas,ptrUpdate,typ, thr, signFuncInZero);
+  gradientDescentStepCBlasCode(ptrY,ptrX,numX,ptrNet0,ptrDeltas,ptrUpdate,typ, thr, signFuncInZero, autapse);
   
   results["update"] = update;
   results["deltas"] = deltas;
