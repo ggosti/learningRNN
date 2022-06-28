@@ -884,7 +884,7 @@ py::dict gradientDescentStepCpp(py::array_t<int> Y,py::array_t<int> X, py::array
   py::array_t<double> deltas = py::array_t<double>(bufX.shape);
   py::buffer_info bufDeltas = deltas.request();
   double *ptrDeltas = (double *) bufDeltas.ptr;   
-  py::print("deltas size",bufDeltas.shape); 
+  //py::print("deltas size",bufDeltas.shape); 
   //update
   py::array_t<double> update = py::array_t<double>(bufNet0.shape);
   py::buffer_info bufUpdate = update.request();
@@ -900,7 +900,7 @@ py::dict gradientDescentStepCpp(py::array_t<int> Y,py::array_t<int> X, py::array
 
 
 void gradientDescentStepCBlasCode(double* ptrY, double* ptrX, unsigned int numX, double* ptrNet0, double* ptrDeltas, double* ptrUpdate, int typ, double thr, int signFuncInZero){
-  unsigned int i,j,k;
+  unsigned int i;
 
   //py::array_t<int> Ypred = py::array_t<int>(N*numX);
 	//py::buffer_info bufYpred = Ypred.request();
@@ -946,16 +946,38 @@ void gradientDescentStepCBlasCode(double* ptrY, double* ptrX, unsigned int numX,
     ptrDeltas[i] = ptrY[i] - Ypred[i];
   }
 
-  for(j=0; j<N; j++){
-    for(i=0; i<N; i++){
-      ptrUpdate[i+N*j] = 0;
-      for(k=0;k<numX;k++){
-        ptrUpdate[i+N*j] += ptrDeltas[i+N*k] * ptrX[j+N*k];
-      }
-    }
-  }
+  //for(j=0; j<N; j++){
+  //  for(i=0; i<N; i++){
+  //    ptrUpdate[i+N*j] = 0;
+  //    for(k=0;k<numX;k++){
+  //      ptrUpdate[i+N*j] += ptrDeltas[i+N*k] * ptrX[j+N*k];
+  //    }
+  //  }
+  //}
   
+  //py::print("ptrUpdate cpp");
+  //for (unsigned int j=0; j<5;++j){ //N
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(ptrUpdate[i+j*N]);
+  //  }
+  //py::print(j,line);
+  //}
   
+  int l=N; //number of rows in C, number of rows in A
+  int n=N; //number of columns in C, number of row in B
+  int m=numX; //number of columns in A, number of columns in B
+  //double update[N*N];
+  cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans, n, l, m, 1.0, ptrX, l, ptrDeltas, l,  0.0, ptrUpdate, l);
+  
+  //py::print("update CBlas");
+  //for (unsigned int j=0; j<5;++j){ //N
+  //  py::list line;
+  //  for (unsigned int i = 0; i < N; ++i) {
+  //    line.append(update[i+j*N]);
+  //  }
+  //py::print(j,line);
+  //} 
   
 }
 
@@ -988,7 +1010,7 @@ py::dict gradientDescentStepCblas(py::array_t<double> Y,py::array_t<double> X, p
   py::array_t<double> deltas = py::array_t<double>(bufX.shape);
   py::buffer_info bufDeltas = deltas.request();
   double *ptrDeltas = (double *) bufDeltas.ptr;   
-  py::print("deltas size",bufDeltas.shape); 
+  //py::print("deltas size",bufDeltas.shape); 
   //update
   py::array_t<double> update = py::array_t<double>(bufNet0.shape);
   py::buffer_info bufUpdate = update.request();
@@ -1032,8 +1054,9 @@ void gradientDescentNSteps(int* ptrY,int* ptrX, unsigned int numX,
         }
       }
     }
-    //py::print("net0",ptrNet0[0],"alpha",alpha,"update",update[0]); 
-    //py::print("net0",ptrNet0[1],"alpha",alpha,"update",update[1]); 
+    //py::print("cpp net [0]",ptrNet1[0],"alpha",alpha,"update",update[0]); 
+    //py::print("cpp net [1]",ptrNet1[1],"alpha",alpha,"update",update[1]);
+    //py::print("cpp net [N]",ptrNet1[N],"alpha",alpha,"update",update[N]);  
     for(j=0; j<N; j++){
       for(i=0; i<N; i++){ 
         ptrNet1[i+N*j] += alpha * update[i+N*j];
@@ -1087,6 +1110,133 @@ py::dict gradientDescentNStepsCpp(py::array_t<int> Y,py::array_t<int> X, py::arr
 }
 
 
+
+void gradientDescentNStepsCblasCode(double* ptrY,double* ptrX, unsigned int numX,
+                             double* ptrNet0, double* ptrNet1, double* ptrDeltas,
+                             double alpha,unsigned int NSteps, 
+                             int typ, double thr, int signFuncInZero){
+  unsigned int step,i,j;
+
+  //py::array_t<int> Ypred = py::array_t<int>(N*numX);
+	//py::buffer_info bufYpred = Ypred.request();
+  //int *ptrYpred = (int *) bufYpred.ptr;
+  double update[N*N];
+  for(i=0; i<N*N; i++){ 
+    ptrNet1[i] = ptrNet0[i];
+  }
+
+  py::print("NSteps",NSteps);
+  for(step=0; step<NSteps; step++){
+    //gradientDescentStepCBlasCode(ptrY,ptrX,numX,ptrNet1,ptrDeltas,update,typ, thr, signFuncInZero);    
+    double Ypred[numX*N];
+    //for(i=0; i<numX*N; i++){
+    //  Ypred[i] = 0;
+    //}
+    //trans(ptrX, Ypred, ptrNet0, numX, N,typ, thr, signFuncInZero);
+    transCBLAS(ptrX,Ypred, ptrNet1, numX , N, thr, thr, signFuncInZero);
+
+    //py::print("Ypred CBlas");
+    //for (unsigned int j=0; j<5;++j){ //numX
+    //  py::list line;
+    //  for (unsigned int i = 0; i < N; ++i) {
+    //    line.append(Ypred[i+j*N]);
+    //    //py::print(i,j,k,ptrNet[i+j*N+k*N*N]);
+    //  }
+    //py::print(j,line);
+    //}
+    for(i=0; i<numX*N; i++){
+      ptrDeltas[i] = ptrY[i] - Ypred[i];
+    }
+    
+    //for(j=0; j<N; j++){
+    //  for(i=0; i<N; i++){
+    //    ptrUpdate[i+N*j] = 0;
+    //    for(k=0;k<numX;k++){
+    //      ptrUpdate[i+N*j] += ptrDeltas[i+N*k] * ptrX[j+N*k];
+    //    }
+    //  }
+    //}
+    
+    //py::print("ptrUpdate cpp");
+    //for (unsigned int j=0; j<5;++j){ //N
+    //  py::list line;
+    //  for (unsigned int i = 0; i < N; ++i) {
+    //    line.append(ptrUpdate[i+j*N]);
+    //  }
+    //py::print(j,line);
+    //}
+    
+    int l=N; //number of rows in C, number of rows in A
+    int n=N; //number of columns in C, number of row in B
+    int m=numX; //number of columns in A, number of columns in B
+    //double update[N*N];
+    cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans, n, l, m, 1.0, ptrDeltas, l, ptrX, l,  0.0, update, l);
+  
+    //py::print("update CBlas");
+    //for (unsigned int j=0; j<5;++j){ //N
+    //  py::list line;
+    //  for (unsigned int i = 0; i < N; ++i) {
+    //    line.append(update[i+j*N]);
+    //  }
+    //py::print(j,line);
+    //} 
+    
+    
+    //py::print("cblas net [0]",ptrNet1[0],"alpha",alpha,"update",update[0]); 
+    //py::print("cblas net [1]",ptrNet1[1],"alpha",alpha,"update",update[1]);
+    //py::print("cblas net [N]",ptrNet1[N],"alpha",alpha,"update",update[N]);  
+    for(j=0; j<N; j++){
+      for(i=0; i<N; i++){ 
+        ptrNet1[i+N*j] += alpha * update[i+N*j];
+      }
+    }
+    //py::print("net1",ptrNet1[0]);
+  }
+}
+
+py::dict gradientDescentNStepsCblas(py::array_t<double> Y,py::array_t<double> X, py::array_t<double>net0, double alpha, unsigned int NSteps, int typ = 1,double thr = 0.0, int signFuncInZero = 1){
+  
+  py::dict results;
+
+  //X
+  py::buffer_info bufX = X.request();
+  double *ptrX = (double *) bufX.ptr;
+  size_t numX = (unsigned int) bufX.shape[0];
+  size_t size = (unsigned int) bufX.shape[1];
+  assert (N == size);
+  //Y
+  py::buffer_info bufY = Y.request();
+  double *ptrY = (double *) bufY.ptr;
+  size_t numY = (unsigned int) bufY.shape[0];
+  size_t sizeY = (unsigned int) bufY.shape[1];
+  assert (N == sizeY);
+  assert (numX == numY);
+  ////net0
+  py::buffer_info bufNet0 = net0.request();
+  double *ptrNet0 = (double *) bufNet0.ptr;
+  unsigned int N0p = (unsigned int) bufNet0.shape[1];
+  unsigned int N0pp = (unsigned int)  bufNet0.shape[0];
+  assert (N == N0p);  // change line 11 # define N 14
+  assert (N == N0pp);  
+
+  //deltas
+  py::array_t<double> deltas = py::array_t<double>(bufX.shape);
+  py::buffer_info bufDeltas = deltas.request();
+  double *ptrDeltas = (double *) bufDeltas.ptr;   
+  py::print("deltas size",bufDeltas.shape); 
+  //update
+  py::array_t<double> net1 = py::array_t<double>(bufNet0.shape);
+  py::buffer_info bufNet1 = net1.request();
+  double *ptrNet1= (double *) bufNet1.ptr;
+  
+  //do stuff
+  gradientDescentNStepsCblasCode(ptrY,ptrX,numX,ptrNet0,ptrNet1,ptrDeltas,alpha,NSteps,typ, thr, signFuncInZero);
+  
+  results["net"] = net1;
+  results["deltas"] = deltas;
+  return results;
+}
+
 PYBIND11_MODULE(hrnn, m) {
     m.doc() = "run recurrent hopfield neural network"; // optional module docstring
     m.def("runRHNN", &runRHNN, "Runs recurrent neural network");
@@ -1099,4 +1249,5 @@ PYBIND11_MODULE(hrnn, m) {
     m.def("gradientDescentStepCpp", &gradientDescentStepCpp, "gradien descent step");
     m.def("gradientDescentStepCblas", &gradientDescentStepCblas, "gradien descent step");
     m.def("gradientDescentNStepsCpp", &gradientDescentNStepsCpp, "gradien descent N step");
+    m.def("gradientDescentNStepsCblas", &gradientDescentNStepsCblas, "gradien descent N step");
 }

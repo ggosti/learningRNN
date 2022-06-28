@@ -68,7 +68,7 @@ for i,sm in enumerate(seeds):
        seqs.append(seq1)
 
 X_train, Y_train = lrnn.makeTrainXYfromSeqs(seqs, nP, isIndex= True)
-print('Y_train',Y_train.dtype)
+#print('Y_train',Y_train.dtype)
 
 t1= time.time()
 transition_list = lrnn.transPy(X_train,objective, N, typ, thr)
@@ -106,20 +106,20 @@ print('gradeint descent step Cblas cpp',t4-t3)
 print('gradeint descent step results',results.keys())
 
 
-print('deltas Cblas shape',resultsCblas['deltas'].shape)
-print('deltas shape',delta.shape)
-print('deltas Cblas',resultsCblas['deltas'])
-print('deltas',delta)
+#print('deltas Cblas shape',resultsCblas['deltas'].shape)
+#print('deltas shape',delta.shape)
+#print('deltas Cblas',resultsCblas['deltas'])
+#print('deltas',delta)
 print('--> Test deltas', (results['deltas']==delta).all() )
 print('--> Test deltas Cblas', (resultsCblas['deltas']==delta).all() )
 #print('update',results['update'])
 #print('update',update)
 print('--> Test update',np.sum((results['update']-update)**2))
+print('--> Test update Cblas',np.sum((resultsCblas['update']-update)**2))
 
-"""
 
 alpha = 0.00001
-NSteps=100
+NSteps= 100
 
 t1= time.time()
 net1,delta = lrnn.gradientDescentNSteps(Y_train,X_train,net0,alpha,NSteps,netPars=nP,autapse = True,signFuncInZero = 1)
@@ -128,19 +128,28 @@ t2= time.time()
 results = hrnn.gradientDescentNStepsCpp(Y_train,X_train,obj,alpha,NSteps,typ,thr, 1)
 t3= time.time()
 
+resultsCblas = hrnn.gradientDescentNStepsCblas(Y_train,X_train,obj,alpha,NSteps,typ,thr, 1)
+t4= time.time()
+
 print('gradeint descent Nsteps pyhton',t2-t1)
 print('gradeint descent Nsteps cpp',t3-t2)
+print('gradeint descent Nsteps cblas',t4-t3)
 print('gradeint descent Nsteps results',results.keys())
 
-#print('deltas',results['deltas'][:2,:])
-#print('deltas',delta[:2,:])
+print('deltas',delta[:2,:])
+print('deltas cpp ',results['deltas'][:2,:])
+print('deltas cblas',resultsCblas['deltas'][:2,:])
 print('--> Test deltas', (results['deltas']==delta).all() )
+print('--> Test deltas cblas', (resultsCblas['deltas']==delta).all() )
 #print('net1',results['net'].shape)
 #print('net1',net1.shape)
 #print('net1',results['net'][:2,:])
 #print('net1',net1[:2,:])
 print('--> Test net0',np.sum((results['net']-net1)**2))
+print('--> Test net0 cblas',np.sum((resultsCblas['net']-net1)**2))
 
+
+"""
 # set the gradient descent hyperparameters
 T = 3000#3000 # Number of gradient descent steps
 alpha = 10

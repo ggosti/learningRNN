@@ -581,7 +581,9 @@ def runGradientDescentCpp(X,y,alpha0,N=None,alphaHat=None, passi=10**6,runSeed=3
         deltasVal = [np.sum(deltaVal**2)/yval.shape[0]]
     start = time.time()
     for j in range(sampleRange):
-        net0,delta = gradientDescentNSteps(y,X,net0,alpha0,NSteps,netPars,autapse,normalize,signFuncInZero)
+        #net0,delta = gradientDescentNSteps(y,X,net0,alpha0,NSteps,netPars,autapse,normalize,signFuncInZero)
+        results = hrnn.gradientDescentNStepsCpp(y,X,net0,alpha0,NSteps,typ,thr, 1)
+        net0,delta = results['net'],results['deltas']
         sumSqrDelta = np.sum(delta**2)
         #print('j',j,'np.sum(delta**2)',np.sum(delta**2))
         if not np.isfinite(sumSqrDelta):
@@ -635,6 +637,7 @@ def runGradientDescentCpp(X,y,alpha0,N=None,alphaHat=None, passi=10**6,runSeed=3
             return net0,deltas,exTime,convStep, bestErrors, bestNet, deltasTest, deltasVal
     else:
         return net0,deltas,exTime,convStep, bestErrors, bestNet
+
 
 
 def thFPostiveFNegativeTPFSignRatios(netObj,net0,thRate = 1.0):
