@@ -33,7 +33,7 @@ for i in range(Sub1.shape[0]): #Sub1.shape[0]
     
     #axs[i].axis('off')
 optimal_thr, x = soglia.optimal_th(Sub1, plot=True)
-print(f"optimal threshold = {optimal_thr}")
+#print(f'optimal threshold = {optimal_thr}')
 
 # %%
 plt.figure(figsize=(20,3))
@@ -99,8 +99,8 @@ timestr = time.strftime("%Y%m%d-%H%M%S")
 
 #ad ogni run creo una cartella all'interno di hyperparameters search che contiene i file generati durante il run
 #(matrici e figure)
-directory_name='sub['+sub+']N'+str(N)+'g'+str(g)+'norm'+str(norm)+'-timestr'+timestr+'(with Validation)'
-parent_dir="C:/Users/martina/Desktop/IIT/hyperparameters search/" 
+directory_name='sub'+sub+'N'+str(N)+'g'+str(g)+'norm'+str(norm)+'timestr'+timestr+'WithValidationACTfun1'
+parent_dir="." 
 
 path = os.path.join(parent_dir, directory_name) #path associato alla cartella creata
 os.mkdir(path)
@@ -139,7 +139,7 @@ for j in range(n_alpha):
       lrnn.runGradientDescent(X_train, Y_train, alpha0= 0.0, alphaHat=alpha[j],
                              batchFr = 1.0, passi=T[j], runSeed = 3098, gdStrat="GD", k=1, netPars=nP,
                               showGradStep= False, xi= xi_GD[k], mexpon = -1.5, normalize = norm,
-                                Xtest=X_test, ytest=Y_test,Xval=X_val, yval=Y_val)
+                                Xtest=X_test, ytest=Y_test,Xval=X_val, yval=Y_val, signFuncInZero=0)
     
       t_mats[i,j,k,:,:]=trained_matrix 
       t_dels[i,j,k,:]=deltas           
