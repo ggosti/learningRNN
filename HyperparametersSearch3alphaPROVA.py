@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # %%
 #import sys
 #sys.path.append('/content/gdrive/My Drive/LaboratorioMEG2021/learningRNN/')
