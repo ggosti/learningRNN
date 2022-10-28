@@ -327,8 +327,8 @@ plt.savefig(path+'/deltas Train and Tests')
 #MATRICI (vecchia versione)
 
 #faccio la media e lo standard error sui segmenti --> ottengo due matrici medie (una per ogni alpha)
-mean_mats=np.zeros((n_alpha,n_xi,N,N))
-se_mats=np.zeros((n_alpha,n_xi,N,N))
+mean_mats=np.zeros((n_alpha,n_xi,N+1,N+1))
+se_mats=np.zeros((n_alpha,n_xi,N+1,N+1))
 for j in range(n_alpha):
     for k in range(n_xi):
         mean_mats[j,k,:,:]=np.mean(t_mats[:,j,k,:,:],axis=0)
@@ -360,5 +360,5 @@ for j, subfig in enumerate(subfigs):
 fig.savefig(path+'/mean and se matrix')
 
 
-
+plt.show()
 
