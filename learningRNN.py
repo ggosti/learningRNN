@@ -134,7 +134,8 @@ def transPy(sigma_path0,net1,N,typ = 1, thr = 0,signFuncInZero = 1):
         net1 = np.float32(net1)
     if not sigma_path0 == np.float32:
         sigma_path0 = np.float32(sigma_path0)
-    sigma_path1 = net1.dot(sigma_path0.T)
+    sigma_path1 = np.array(net1.dot(sigma_path0.T))
+    #print('sigma_path1 tupe',type(sigma_path1))
     #print(sigma_path1)
     #if signFuncInZero == 1:
     #    sigma_path1 [sigma_path1  == 0] = 0.000001
@@ -251,11 +252,11 @@ def gradientDescentStep(y,X,net0,netPars,autapse = False,signFuncInZero = 1):
     yhat = transPy(X, net0, N, typ, thr,signFuncInZero)
     #print 'yhat',yhat
     delta = (y-yhat)
-    #print delta
-    #print X
-    #Xp = np.delete(X, (i), axis=1)
+    #print('delta',delta.shape,delta,type(delta))
+    #print(delta**2)
     update = np.asmatrix(X).T.dot(np.asmatrix(delta))
-    #print update
+    #print('update',update.shape,update.dtype)
+    #print(update)
     if not autapse:
         np.fill_diagonal(update, 0) # important no autapsi!!
     if not np.isfinite(np.sum(delta**2)):
