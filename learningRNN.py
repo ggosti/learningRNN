@@ -90,12 +90,11 @@ def generateSmallWorldBase(N,knei,pr,rseed=None):
     #genero un seme random (numero intero compreso tra 0 e 10000)
     if rseed==None: 
         rseed=np.random.randint(0,10000)
-    
-    print (rseed)
+        print (rseed)
     
 
     #genero una rete casuale con seme 'seed' (connessioni casuali tra nodi)
-    G=nx.watts_strogatz_graph(N,knei,pr,rseed)
+    G=nx.watts_strogatz_graph(N,knei,pr,int(rseed))
 
     #genero matrice delle adiacenze di G
     C=np.int32(nx.adjacency_matrix(G).todense())
@@ -368,6 +367,7 @@ def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchF
     #print np.sum(np.abs(net0),axis=1)
     m = X.shape[0]
     bestErrors = N
+    bestNet = None
     if verbose: print('m ',m)
     if uniqueRow == True:
         new_array = [''.join( str(e) for e in np.uint8(row).tolist() ) for row in X]
