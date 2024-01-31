@@ -129,7 +129,7 @@ def sign(x,signFuncInZero = 1):
 
 def transPy(sigma_path0,net1,N,typ = 1, thr = 0,signFuncInZero = 1):
     """
-    transiton function. net1 is the network that generates the ttransitions
+    transiton function. net1 is the network that generates the transitions
     
     If sigma_path0 is a binary vector it generates the corresponding transtions.
     
@@ -138,9 +138,9 @@ def transPy(sigma_path0,net1,N,typ = 1, thr = 0,signFuncInZero = 1):
     typ determins if the neuron activation state is defined in {-1,1} or {0,1} 
     typ=1 --> {-1,1}    typ=0 --> {0,1} 
     """
-    if not net1 == np.float32:
+    if not net1.dtype == np.float32:
         net1 = np.float32(net1)
-    if not sigma_path0 == np.float32:
+    if not sigma_path0.dtype == np.float32:
         sigma_path0 = np.float32(sigma_path0)
     sigma_path1 = np.array(net1.dot(sigma_path0.T))
     #print('sigma_path1 tupe',type(sigma_path1))
@@ -165,9 +165,9 @@ def transActiv(sigma_path0, net1, N, typ=1, thr=0, signFuncInZero=1):
     typ determins if the neuron activation state is defined in {-1,1} or {0,1}
     typ=1 --> {-1,1}    typ=0 --> {0,1}
     """
-    if not net1 == np.float32:
+    if not net1.dtype == np.float32:
         net1 = np.float32(net1)
-    if not sigma_path0 == np.float32:
+    if not sigma_path0.dtype == np.float32:
         sigma_path0 = np.float32(sigma_path0)
     sumx = net1.dot(sigma_path0.T)
     # print sigma_path1
@@ -361,7 +361,7 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
 
 
     
-def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,mexpon=-1.8,normalize = False,Xtest=[],ytest=[], Xval=[], yval=[], autapse=False,signFuncInZero=1):
+def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,nExpon=-1.8,mExpon=-1.,normalize = False,Xtest=[],ytest=[], Xval=[], yval=[], autapse=False,signFuncInZero=1):
     if N == None:
         N = netPars['N']
     assert N == X.shape[1] , 'ERROR!: makeTrainXYfromSeqs was made with trasposed input'
@@ -393,7 +393,7 @@ def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchF
     if not gdStrat == 'SGD': batchFr = 1.0
     batchSize = m/batchFr
     if verbose: print('batchSize',batchSize,'fract',batchFr)
-    if alpha0 == 0.0: alpha0 =alphaHat *( m **(-1.0) ) *( N **(mexpon) ) #alpha0 =alphaHat /  ( m *  N**2)
+    if alpha0 == 0.0: alpha0 =alphaHat *( m **(mExpon) ) *( N **(nExpon) ) #alpha0 =alphaHat /  ( m *  N**2)
     if verbose: print('alphaHat',alphaHat,'alpha0',alpha0)
     
     convStep = np.inf
