@@ -108,7 +108,16 @@ def generateSmallWorldBase(N,knei,pr,rseed=None):
 
     return rseed, C
 
-
+def generateDenseNetwork(N, threshold):
+    #genera una matrice densa NxN con i pesi random compresi tra -1 e 1
+    #i pesi sotto ad una certa soglia (threshold) vengono posti = 0
+    dense_matrix=np.float32(2*np.random.rand(N,N)-1)
+    
+    for i in range(N):
+        for j in range (N):
+            if abs(dense_matrix[i,j])<threshold:
+                dense_matrix[i,j]=0
+    return(dense_matrix)
 
 def sign(x,signFuncInZero = 1):
     y = np.sign(x)
