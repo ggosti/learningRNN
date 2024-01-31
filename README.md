@@ -14,7 +14,7 @@ The code uses Python2.7 and the following Python open source packages:
 - Pandas
 - NetworkX
 
-You may install the Python requirements with `pip install -r requirements.txt` or `conda install --yes --file requirements.txt`.
+You may install the Python requirements with `pip install -r requirements.txt` or `conda install --yes --file requirements.txt`, or is you want to create a new conda enviroment `conda create --name myenv --file requirements.txt'.
 
 
 Test
