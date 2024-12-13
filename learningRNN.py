@@ -112,6 +112,7 @@ def generateDenseNetwork(N, threshold):
     #genera una matrice densa NxN con i pesi random compresi tra -1 e 1
     #i pesi sotto ad una certa soglia (threshold) vengono posti = 0
     dense_matrix=np.float32(2*np.random.rand(N,N)-1)
+    np.fill_diagonal(dense_matrix, 0)
     
     for i in range(N):
         for j in range (N):
