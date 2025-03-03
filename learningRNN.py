@@ -362,20 +362,27 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
 
 
     
-def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,nExpon=-1.8,mExpon=-1.,normalize = False,Xtest=[],ytest=[], Xval=[], yval=[], autapse=False,signFuncInZero=1):
+def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,nExpon=-1.8,mExpon=-1.,normalize = False,Xtest=[],ytest=[], Xval=[], yval=[], autapse=False,signFuncInZero=1,bias=False):
     if N == None:
         N = netPars['N']
     assert N == X.shape[1] , 'ERROR!: makeTrainXYfromSeqs was made with trasposed input'
+    m = X.shape[0]
+    
     np.random.seed(runSeed)
     net0 = np.float32(2*np.random.rand(N,N)-1) #np.zeros((r, w), dtype=np.float32)  # np.float32(np.random.randint(0, 2, size=(r, w)))  # np.float32(2*np.random.rand(r,w)-1)
+    if bias: 
+        newrow = np.ones((m,1))
+        X = np.hstack([X, newrow])
+        net0 = np.float32(2*np.random.rand(N,N+1)-1)
     if not autapse: np.fill_diagonal(net0, 0)
     if normalize: net0 = rowNorm(net0)
     if not nullConstr == None: net0[nullConstr==True]=0
-     
+
+    
     #print 'start net0'
     #print net0
     #print np.sum(np.abs(net0),axis=1)
-    m = X.shape[0]
+
     bestErrors = N
     bestNet = None
     if verbose: print('m ',m)
