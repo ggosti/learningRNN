@@ -239,10 +239,10 @@ def ftr(sigma_path0, sigma_cycleStart, net1, N, typ, thr): # assume path0 is cyc
     if not len(sigma_cycleStart) > 0:
         if sigma_cycleStart == None:
             sigmas_0 = np.array( list(sigma_path0[1:]))
-            sigmas_1 = np.array(transPy(sigma_path0[:-1],net1,N,typ,thr))
+            sigmas_1 = np.array(transPy(sigma_path0[:-1],net1,N,typ,thr,signFuncInZero))
     else:
         sigmas_0 = np.array( list(sigma_path0[1:])+[sigma_cycleStart])
-        sigmas_1 = np.array(transPy(sigma_path0,net1,N,typ,thr))
+        sigmas_1 = np.array(transPy(sigma_path0,net1,N,typ,thr,signFuncInZero))
     d = sigmas_1 - sigmas_0
     d = np.asfarray(d)
     #if typ == 0: d=0.5*d
@@ -259,10 +259,7 @@ def gradientDescentStep(y,X,net0,netPars,autapse = False,signFuncInZero = 1):
     """
     N, typ, thr = netPars['N'],netPars['typ'],netPars['thr']
     yhat = transPy(X, net0, N, typ, thr,signFuncInZero)
-    #print 'yhat',yhat
     delta = (y-yhat)
-    #print('delta',delta.shape,delta,type(delta))
-    #print(delta**2)
     update = np.asmatrix(X).T.dot(np.asmatrix(delta))
     #print('update',update.shape,update.dtype)
     #print(update)
@@ -282,8 +279,7 @@ def gradientDescentLogisticStep(y,X,k,net0,netPars):
     gradient descent step  for the logistic approximation of the activation function
     """
     N, typ, thr = netPars['N'],netPars['typ'],netPars['thr']
-    yhat = transPy(X, net0, N, typ, thr)
-    #print 'yhat',yhat
+    yhat = transPy(X, net0, N, typ, thr,signFuncInZero)
     delta = (y-yhat)
     #print delta
     #print 'X'
@@ -303,7 +299,7 @@ def gradientDescentStepDeltaRule(y,X,alpha,net0,netPars):
     gradient descent step
     """
     N, typ, thr = netPars['N'],netPars['typ'],netPars['thr']
-    yhat = transPy(X, net0, N, typ, thr)
+    yhat = transPy(X, net0, N, typ, thr,signFuncInZero)
     print('yhat',yhat)
     delta = (y-yhat)
     print(delta)
@@ -324,7 +320,7 @@ def stochasticGradientDescentStep(y,X,net0,batchSize,netPars):
     draws = np.random.choice(y.shape[0],size=batchSize,replace=False)
     ybatch = y[draws,:]
     Xbatch = X[draws,:]
-    yhat = transPy(Xbatch, net0, N, typ, thr)
+    yhat = transPy(Xbatch, net0, N, typ, thr,signFuncInZero)
     #yhat = np.array([yhat[:,i]]).T
     delta = (ybatch-yhat)
     #Xp = np.delete(X, (i), axis=1)
@@ -362,7 +358,8 @@ def makeTrainXYfromSeqs(seqs,nP,isIndex=True):
 
 
     
-def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0},showGradStep=True, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,nExpon=-1.8,mExpon=-1.,normalize = False,Xtest=[],ytest=[], Xval=[], yval=[], autapse=False,signFuncInZero=1,bias=False):
+def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchFr = 10.0,passi=10**6,runSeed=3098,gdStrat='SGD',k=1,netPars={'typ':0.0}, verbose = True, xi = 0.0 ,uniqueRow=False,lbd = 0.0,nExpon=-1.8,mExpon=-1.,normalize = False,Xtest=[],ytest=[], Xval=[], yval=[], autapse=False,signFuncInZero=1,bias=False):
+    typ, thr = netPars['typ'],netPars['thr']
     if N == None:
         N = netPars['N']
     assert N == X.shape[1] , 'ERROR!: makeTrainXYfromSeqs was made with trasposed input'
@@ -377,8 +374,7 @@ def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchF
     if not autapse: np.fill_diagonal(net0, 0)
     if normalize: net0 = rowNorm(net0)
     if not nullConstr == None: net0[nullConstr==True]=0
-
-    
+        
     #print 'start net0'
     #print net0
     #print np.sum(np.abs(net0),axis=1)
@@ -393,11 +389,6 @@ def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchF
         y = y[index,:]
         m = X.shape[0]
         if verbose: print('m unique ',m)
-        plt.figure()
-        plt.imshow(X,interpolation='nearest')
-        plt.figure()
-        plt.imshow(np.corrcoef(X.T),interpolation='nearest')
-        plt.colorbar()
     if not gdStrat == 'SGD': batchFr = 1.0
     batchSize = m/batchFr
     if verbose: print('batchSize',batchSize,'fract',batchFr)
@@ -424,15 +415,12 @@ def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchF
         if j%(passi/200) == 0:
             # if there is test compute score
             if len(Xtest)>0:
-                typ, thr = netPars['typ'],netPars['thr']
-                ytesthat = transPy(Xtest, net0, N, typ, thr)
-                #print 'yhat',yhat
+                ytesthat = transPy(Xtest, net0, N, typ, thr,signFuncInZero)
                 deltaTest = (ytest-ytesthat)
                 deltaTest = np.sum(deltaTest**2)
                 deltasTest.append(deltaTest/ytest.shape[0])
             if len(Xval)>0:
-                typ, thr = netPars['typ'],netPars['thr']
-                yValhat = transPy(Xval, net0, N, typ, thr)
+                yValhat = transPy(Xval, net0, N, typ, thr,signFuncInZero)
                 #print 'yhat',yhat
                 deltaVal = (yval-yValhat)
                 deltaVal = np.sum(deltaVal**2)
@@ -443,44 +431,6 @@ def runGradientDescent(X,y,alpha0,N=None,alphaHat=None, nullConstr = None,batchF
             #print 'sumSqrDelta ', sumSqrDelta
             fullSumSqrDelta = sumSqrDelta
             if batchFr < 1.0: updatefull,fullSumSqrDelta,delta,X = gradientDescentStep(y,X,net0,netPars,autapse,signFuncInZero)
-            if showGradStep:
-                if verbose: print('alpha*update ', (alpha * update.T).mean(), (alpha * update.T).std())
-                f, axs = plt.subplots(2,5)
-                axs[0,0].set_title('update')
-                axs[0,0].set_xlabel('i')
-                axs[0,0].set_ylabel('i')
-                axs[0,0].imshow(update,interpolation='nearest')
-                axs[0,1].set_title('delta')
-                axs[0,1].set_xlabel('t')
-                axs[0,1].set_ylabel('i')
-                axs[0,1].imshow(delta.T,interpolation='nearest')
-                axs[0,2].set_title('X')
-                axs[0,2].set_xlabel('t')
-                axs[0,2].set_ylabel('i')
-                axs[0,2].imshow(X.T,interpolation='nearest')
-                if gdStrat == 'GDLogistic':
-                    axs[0,3].set_title('gamma')
-                    axs[0,3].set_xlabel('t')
-                    axs[0,3].set_ylabel('i')
-                    axs[0,3].imshow(gamma,interpolation='nearest')
-                    axs[0,4].set_title('log. Der.')
-                    axs[0,4].imshow(logisticDer,interpolation='nearest')
-                    axs[0,4].set_xlabel('t')
-                    axs[0,4].set_ylabel('i')
-                if batchFr < 1.0:
-                    if verbose: print('update full', (updatefull.T).mean(), (updatefull.T).std())
-                    axs[1,0].set_title('updatefull')
-                    axs[1,0].set_xlabel('i')
-                    axs[1,0].set_ylabel('i')
-                    axs[1,0].imshow(updatefull,interpolation='nearest')
-                    axs[1,1].set_title('delta')
-                    axs[1,1].set_xlabel('t')
-                    axs[1,1].set_ylabel('i')
-                    axs[1,1].imshow(delta.T,interpolation='nearest')
-                    axs[1,2].set_title('X')
-                    axs[1,2].set_xlabel('t')
-                    axs[1,2].set_ylabel('i')
-                    axs[1,2].imshow(X.T,interpolation='nearest')
             #print 'accuracy ', (sumSqrDelta/batchSize) - (fullSumSqrDelta/y.shape[0]),' alpha ',alpha
             deltas.append(sumSqrDelta/batchSize)
             fullDeltas.append(fullSumSqrDelta/y.shape[0])
